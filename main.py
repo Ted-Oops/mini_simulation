@@ -1,6 +1,7 @@
 from config import build_experiment_config
 from market import SimpleMarket
 from models import DecisionMode, StrategyType
+from visualization import save_experiment_report
 
 
 def main() -> None:
@@ -12,6 +13,7 @@ def main() -> None:
     market = SimpleMarket(config)
     market.run_simulation()
     summary = market.get_summary()
+    output_dir = save_experiment_report(summary)
 
     print("=== Mini Simulation Summary ===")
     print(f"strategy_type: {summary['strategy_type']}")
@@ -32,6 +34,9 @@ def main() -> None:
             f"shares={agent_info['shares']}, "
             f"avg_cost={agent_info['avg_cost']:.2f}"
         )
+
+    print()
+    print(f"report_saved_to: {output_dir}")
 
 
 if __name__ == "__main__":

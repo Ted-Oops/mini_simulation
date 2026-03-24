@@ -1,0 +1,106 @@
+from dataclasses import dataclass, field
+from enum import Enum
+
+class StrategyType(str, Enum):
+    FUNDAMENTAL = "fundamental"
+    MOMENTUM = "momentum"
+    SPECULATOR = "speculator"
+
+class DecisionMode(str, Enum):
+    RULE_BASED = "rule_based"
+    HALF_RULE_BASED = "half_rule_based"
+    OPEN_ENDED = "open_ended"
+
+class TradeAction(str, Enum):
+    BUY = "buy"
+    SELL = "sell"
+    HOLD = "hold"
+
+@dataclass
+class OrderDecision:
+    agent_id: str
+    action: TradeAction
+    quantity: int
+    limit_price: float | None = None
+    reason: str = ""
+    signal_strength: float = 0.0
+
+@dataclass
+class AgentState:
+    agent_id: str
+    cash: float
+    shares: int
+    avg_cost: float
+
+@dataclass
+class MarketState:
+    step: int
+    price: float
+    fundamental_value: float
+    price_history: list[float] = field(default_factory=list)
+    return_history: list[float] = field(default_factory=list)
+    volume_history: list[float] = field(default_factory=list)
+    net_demand_history: list[float] = field(default_factory=list)
+    shock: float = 0.0
+
+@dataclass
+class AgentObservation:
+    step: int
+    price: float
+    fundamental_value: float
+    mispricing: float
+    momentum_1: float
+    momentum_3: float
+    volatility: float
+    net_demand: float
+    shock: float
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

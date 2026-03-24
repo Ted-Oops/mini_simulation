@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from enum import Enum
 
+
 class StrategyType(str, Enum):
     FUNDAMENTAL = "fundamental"
     MOMENTUM = "momentum"
@@ -39,7 +40,7 @@ class MarketState:
     fundamental_value: float
     price_history: list[float] = field(default_factory=list)
     return_history: list[float] = field(default_factory=list)
-    volume_history: list[float] = field(default_factory=list)
+    volume_history: list[int] = field(default_factory=list)
     net_demand_history: list[float] = field(default_factory=list)
     shock: float = 0.0
 
@@ -54,3 +55,17 @@ class AgentObservation:
     volatility: float
     net_demand: float
     shock: float
+
+@dataclass
+class ExperimentConfig:
+    strategy_type: StrategyType
+    decision_mode: DecisionMode
+    num_agents: int
+    num_steps: int
+    initial_price: float
+    initial_fundamental_value: float
+    initial_cash: float
+    lot_size: int = 1
+    price_impact: float = 0.01
+    seed: int = 42
+    enable_shock: bool = False

@@ -2,7 +2,14 @@ import math
 import random
 
 from agents import BaseAgent, FundamentalAgent, MomentumAgent, SpeculatorAgent
-from models import ExperimentConfig, MarketState, StrategyType, AgentObservation, OrderDecision, TradeAction
+from models import (
+    ExperimentConfig,
+    MarketState,
+    StrategyType,
+    AgentObservation,
+    OrderDecision,
+    TradeAction,
+)
 
 
 class SimpleMarket:
@@ -18,7 +25,7 @@ class SimpleMarket:
             return_history=[],
             volume_history=[],
             net_demand_history=[],
-            shock=0.0
+            shock=0.0,
         )
 
         self.agents = self._create_agents()
@@ -36,7 +43,6 @@ class SimpleMarket:
             agent.agent_id: 0 for agent in self.agents
         }
         self._bootstrap_market_context()
-
 
     def _create_agents(self) -> list[BaseAgent]:
         agents: list[BaseAgent] = []
@@ -58,7 +64,7 @@ class SimpleMarket:
                 agent_cls(
                     agent_id=f"{agent_prefix}_{i + 1}",
                     decision_mode=self.config.decision_mode,
-                    initial_cash=self.config.initial_cash
+                    initial_cash=self.config.initial_cash,
                 )
             )
         return agents
@@ -87,16 +93,17 @@ class SimpleMarket:
         previous_return = 0.0
 
         for step in range(num_steps):
-            cyclical_component = (
-                0.009 * math.sin(2 * math.pi * (step + 1) / 6.5 + 0.55)
-                + 0.006 * math.cos(2 * math.pi * (step + 1) / 11.0 + 1.10)
-            )
+            cyclical_component = 0.009 * math.sin(
+                2 * math.pi * (step + 1) / 6.5 + 0.55
+            ) + 0.006 * math.cos(2 * math.pi * (step + 1) / 11.0 + 1.10)
             persistence_component = 0.28 * previous_return
             noise_component = self.rng.uniform(-0.012, 0.012)
             burst_component = 0.0
 
             if step % 7 in (2, 5):
-                burst_component = self.rng.choice([-1.0, 1.0]) * self.rng.uniform(0.004, 0.014)
+                burst_component = self.rng.choice([-1.0, 1.0]) * self.rng.uniform(
+                    0.004, 0.014
+                )
 
             period_return = (
                 cyclical_component
@@ -122,8 +129,10 @@ class SimpleMarket:
         scaling_factor = self.config.initial_price / bootstrap_prices[-1]
         return [max(price * scaling_factor, 0.01) for price in bootstrap_prices]
 
-    def _generate_bootstrap_net_demand(self, bootstrap_returns: list[float]) -> list[int]:
-        bootstrap_net_demand: list[int] = []
+    def _generate_bootstrap_net_demand(
+        self, bootstrap_returns: list[float]
+    ) -> list[float]:
+        bootstrap_net_demand: list[float] = []
         max_abs_demand = max(2, self.config.num_agents - 1)
 
         for period_return in bootstrap_returns:
@@ -139,13 +148,17 @@ class SimpleMarket:
 
         return bootstrap_net_demand
 
-    def _generate_bootstrap_volume(self, bootstrap_net_demand: list[int]) -> list[int]:
+    def _generate_bootstrap_volume(
+        self, bootstrap_net_demand: list[float]
+    ) -> list[int]:
         bootstrap_volume: list[int] = []
         base_volume = max(3, self.config.num_agents // 2)
 
         for signed_demand in bootstrap_net_demand:
             extra_turnover = self.rng.randint(0, base_volume + 2)
-            bootstrap_volume.append(abs(signed_demand) + base_volume + extra_turnover)
+            bootstrap_volume.append(
+                int(abs(signed_demand) + base_volume + extra_turnover)
+            )
 
         return bootstrap_volume
 
@@ -153,7 +166,9 @@ class SimpleMarket:
         if not bootstrap_returns:
             return
 
-        recent_mean_return = sum(bootstrap_returns[-3:]) / min(3, len(bootstrap_returns))
+        recent_mean_return = sum(bootstrap_returns[-3:]) / min(
+            3, len(bootstrap_returns)
+        )
         current_sentiment = 0.6 * bootstrap_returns[-1] + 0.4 * recent_mean_return
 
         if current_sentiment > 0.008:
@@ -205,7 +220,9 @@ class SimpleMarket:
             0.972 + self.rng.uniform(-0.006, 0.006),
             1.000,
         ]
-        shaped_tail = [max(final_price * multiplier, 0.01) for multiplier in tail_template]
+        shaped_tail = [
+            max(final_price * multiplier, 0.01) for multiplier in tail_template
+        ]
         return bootstrap_prices[:-5] + shaped_tail
 
     @staticmethod
@@ -239,7 +256,9 @@ class SimpleMarket:
             return 0.0
         return (mean_price - self.market_state.price) / mean_price
 
-    def _get_peer_action_features(self, agent_id: str) -> tuple[float, float, float, float]:
+    def _get_peer_action_features(
+        self, agent_id: str
+    ) -> tuple[float, float, float, float]:
         peer_items = [
             (peer_id, action)
             for peer_id, action in self.last_actions_by_agent.items()
@@ -249,9 +268,15 @@ class SimpleMarket:
             return 0.0, 0.0, 1.0, 0.0
 
         peer_count = len(peer_items)
-        buy_ratio = sum(action == TradeAction.BUY for _, action in peer_items) / peer_count
-        sell_ratio = sum(action == TradeAction.SELL for _, action in peer_items) / peer_count
-        hold_ratio = sum(action == TradeAction.HOLD for _, action in peer_items) / peer_count
+        buy_ratio = (
+            sum(action == TradeAction.BUY for _, action in peer_items) / peer_count
+        )
+        sell_ratio = (
+            sum(action == TradeAction.SELL for _, action in peer_items) / peer_count
+        )
+        hold_ratio = (
+            sum(action == TradeAction.HOLD for _, action in peer_items) / peer_count
+        )
         peer_net_demand = sum(
             self.last_signed_quantity_by_agent.get(peer_id, 0)
             for peer_id, _ in peer_items
@@ -289,9 +314,7 @@ class SimpleMarket:
 
         if len(state.return_history) >= 2:
             mean_return = sum(state.return_history) / len(state.return_history)
-            squared_diffs = [
-                (ret - mean_return) ** 2 for ret in state.return_history
-            ]
+            squared_diffs = [(ret - mean_return) ** 2 for ret in state.return_history]
             volatility = (sum(squared_diffs) / len(squared_diffs)) ** 0.5
         else:
             volatility = 0.0
@@ -338,7 +361,6 @@ class SimpleMarket:
 
         traded_volume = abs(decision.quantity)
         return signed_quantity, traded_volume, True
-
 
     def run_step(self) -> None:
         total_net_demand = 0
@@ -405,15 +427,20 @@ class SimpleMarket:
         self.last_actions_by_agent = current_actions_by_agent
         self.last_signed_quantity_by_agent = current_signed_quantity_by_agent
 
-
     def run_simulation(self) -> None:
         for _ in range(self.config.num_steps):
             self.run_step()
 
     def get_summary(self) -> dict:
-        simulation_price_history = self.market_state.price_history[self.bootstrap_steps:]
-        simulation_volume_history = self.market_state.volume_history[self.bootstrap_steps:]
-        simulation_net_demand_history = self.market_state.net_demand_history[self.bootstrap_steps:]
+        simulation_price_history = self.market_state.price_history[
+            self.bootstrap_steps :
+        ]
+        simulation_volume_history = self.market_state.volume_history[
+            self.bootstrap_steps :
+        ]
+        simulation_net_demand_history = self.market_state.net_demand_history[
+            self.bootstrap_steps :
+        ]
 
         return {
             "experiment_label": f"{self.config.strategy_type.value}__{self.config.decision_mode.value}",
@@ -426,10 +453,18 @@ class SimpleMarket:
             "price_history": simulation_price_history,
             "volume_history": simulation_volume_history,
             "net_demand_history": simulation_net_demand_history,
-            "bootstrap_price_history": self.market_state.price_history[: self.bootstrap_steps + 1],
-            "bootstrap_return_history": self.market_state.return_history[: self.bootstrap_steps],
-            "bootstrap_volume_history": self.market_state.volume_history[: self.bootstrap_steps],
-            "bootstrap_net_demand_history": self.market_state.net_demand_history[: self.bootstrap_steps],
+            "bootstrap_price_history": self.market_state.price_history[
+                : self.bootstrap_steps + 1
+            ],
+            "bootstrap_return_history": self.market_state.return_history[
+                : self.bootstrap_steps
+            ],
+            "bootstrap_volume_history": self.market_state.volume_history[
+                : self.bootstrap_steps
+            ],
+            "bootstrap_net_demand_history": self.market_state.net_demand_history[
+                : self.bootstrap_steps
+            ],
             "buy_count_history": self.buy_count_history,
             "sell_count_history": self.sell_count_history,
             "hold_count_history": self.hold_count_history,
@@ -443,9 +478,9 @@ class SimpleMarket:
                     "cash": agent.state.cash,
                     "shares": agent.state.shares,
                     "avg_cost": agent.state.avg_cost,
-                    "wealth": agent.state.cash + agent.state.shares * self.market_state.price,
+                    "wealth": agent.state.cash
+                    + agent.state.shares * self.market_state.price,
                 }
                 for agent in self.agents
             ],
         }
-

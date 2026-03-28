@@ -7,15 +7,18 @@ class StrategyType(str, Enum):
     MOMENTUM = "momentum"
     SPECULATOR = "speculator"
 
+
 class DecisionMode(str, Enum):
     RULE_BASED = "rule_based"
     HALF_RULE_BASED = "half_rule_based"
     OPEN_ENDED = "open_ended"
 
+
 class TradeAction(str, Enum):
     BUY = "buy"
     SELL = "sell"
     HOLD = "hold"
+
 
 @dataclass
 class OrderDecision:
@@ -26,12 +29,14 @@ class OrderDecision:
     reason: str = ""
     signal_strength: float = 0.0
 
+
 @dataclass
 class AgentState:
     agent_id: str
     cash: float
     shares: int
     avg_cost: float
+
 
 @dataclass
 class MarketState:
@@ -42,6 +47,7 @@ class MarketState:
     volume_history: list[int] = field(default_factory=list)
     net_demand_history: list[float] = field(default_factory=list)
     shock: float = 0.0
+
 
 @dataclass
 class AgentObservation:
@@ -58,6 +64,7 @@ class AgentObservation:
     peer_hold_ratio: float
     peer_net_demand: float
     shock: float
+
 
 @dataclass
 class ExperimentConfig:

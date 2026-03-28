@@ -171,3 +171,183 @@ class FundamentalAgent(BaseAgent):
             reason="open-ended mode is not implemented yet",
             signal_strength=0.0,
         )
+
+
+class MomentumAgent(BaseAgent):
+    def __init__(
+            self,
+            agent_id: str,
+            decision_mode: DecisionMode,
+            initial_cash: float
+    ) -> None:
+        super().__init__(
+            agent_id=agent_id,
+            strategy_type=StrategyType.MOMENTUM,
+            decision_mode=decision_mode,
+            initial_cash=initial_cash
+        )
+
+    def _decide_rule_based(self, observation: AgentObservation) -> OrderDecision:
+        bullish_trend = observation.momentum_1 > 0 and observation.momentum_3 > 0
+        bearish_trend = observation.momentum_1 < 0 and observation.momentum_3 < 0
+        trend_strength = abs(observation.momentum_1) + abs(observation.momentum_3)
+
+        if observation.volatility > 0.10:
+            return OrderDecision(
+                agent_id=self.agent_id,
+                action=TradeAction.HOLD,
+                quantity=0,
+                reason="volatility is too high for the current momentum template",
+                signal_strength=observation.volatility,
+            )
+
+        if bullish_trend:
+            if self.can_buy(observation.price, 1):
+                return OrderDecision(
+                    agent_id=self.agent_id,
+                    action=TradeAction.BUY,
+                    quantity=1,
+                    limit_price=observation.price,
+                    reason="short-term and medium-term momentum are both positive",
+                    signal_strength=trend_strength,
+                )
+            return OrderDecision(
+                agent_id=self.agent_id,
+                action=TradeAction.HOLD,
+                quantity=0,
+                reason="bullish trend exists but cash is insufficient",
+                signal_strength=trend_strength,
+            )
+
+        if bearish_trend:
+            if self.can_sell(1):
+                return OrderDecision(
+                    agent_id=self.agent_id,
+                    action=TradeAction.SELL,
+                    quantity=1,
+                    limit_price=observation.price,
+                    reason="short-term and medium-term momentum are both negative",
+                    signal_strength=trend_strength,
+                )
+            return OrderDecision(
+                agent_id=self.agent_id,
+                action=TradeAction.HOLD,
+                quantity=0,
+                reason="bearish trend exists but no shares are available",
+                signal_strength=trend_strength,
+            )
+
+        return OrderDecision(
+            agent_id=self.agent_id,
+            action=TradeAction.HOLD,
+            quantity=0,
+            reason="momentum signals are mixed",
+            signal_strength=trend_strength,
+        )
+
+    def _decide_half_rule_based(self, observation: AgentObservation) -> OrderDecision:
+        return OrderDecision(
+            agent_id=self.agent_id,
+            action=TradeAction.HOLD,
+            quantity=0,
+            reason="half-rule-based mode is not implemented yet",
+            signal_strength=0.0,
+        )
+
+    def _decide_open_ended(self, observation: AgentObservation) -> OrderDecision:
+        return OrderDecision(
+            agent_id=self.agent_id,
+            action=TradeAction.HOLD,
+            quantity=0,
+            reason="open-ended mode is not implemented yet",
+            signal_strength=0.0,
+        )
+
+
+class SpeculatorAgent(BaseAgent):
+    def __init__(
+            self,
+            agent_id: str,
+            decision_mode: DecisionMode,
+            initial_cash: float
+    ) -> None:
+        super().__init__(
+            agent_id=agent_id,
+            strategy_type=StrategyType.SPECULATOR,
+            decision_mode=decision_mode,
+            initial_cash=initial_cash
+        )
+
+    def _decide_rule_based(self, observation: AgentObservation) -> OrderDecision:
+        expected_return = (
+            0.7 * observation.momentum_1
+            + 0.3 * observation.momentum_3
+            + 0.001 * observation.net_demand
+            - 0.4 * observation.mispricing
+            + 0.2 * observation.shock
+        )
+
+        if observation.volatility > 0.15:
+            expected_return *= 0.5
+
+        if expected_return > 0.01:
+            if self.can_buy(observation.price, 1):
+                return OrderDecision(
+                    agent_id=self.agent_id,
+                    action=TradeAction.BUY,
+                    quantity=1,
+                    limit_price=observation.price,
+                    reason="expected short-term return is positive in the current template",
+                    signal_strength=abs(expected_return),
+                )
+            return OrderDecision(
+                agent_id=self.agent_id,
+                action=TradeAction.HOLD,
+                quantity=0,
+                reason="positive speculative signal exists but cash is insufficient",
+                signal_strength=abs(expected_return),
+            )
+
+        if expected_return < -0.01:
+            if self.can_sell(1):
+                return OrderDecision(
+                    agent_id=self.agent_id,
+                    action=TradeAction.SELL,
+                    quantity=1,
+                    limit_price=observation.price,
+                    reason="expected short-term return is negative in the current template",
+                    signal_strength=abs(expected_return),
+                )
+            return OrderDecision(
+                agent_id=self.agent_id,
+                action=TradeAction.HOLD,
+                quantity=0,
+                reason="negative speculative signal exists but no shares are available",
+                signal_strength=abs(expected_return),
+            )
+
+        return OrderDecision(
+            agent_id=self.agent_id,
+            action=TradeAction.HOLD,
+            quantity=0,
+            reason="expected short-term return is too small",
+            signal_strength=abs(expected_return),
+        )
+
+    def _decide_half_rule_based(self, observation: AgentObservation) -> OrderDecision:
+        return OrderDecision(
+            agent_id=self.agent_id,
+            action=TradeAction.HOLD,
+            quantity=0,
+            reason="half-rule-based mode is not implemented yet",
+            signal_strength=0.0,
+        )
+
+    def _decide_open_ended(self, observation: AgentObservation) -> OrderDecision:
+        return OrderDecision(
+            agent_id=self.agent_id,
+            action=TradeAction.HOLD,
+            quantity=0,
+            reason="open-ended mode is not implemented yet",
+            signal_strength=0.0,
+        )

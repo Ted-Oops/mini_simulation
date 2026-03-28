@@ -1,6 +1,6 @@
 import random
 
-from agents import BaseAgent, FundamentalAgent
+from agents import BaseAgent, FundamentalAgent, MomentumAgent, SpeculatorAgent
 from models import ExperimentConfig, MarketState, StrategyType, AgentObservation, TradeAction
 
 
@@ -32,21 +32,28 @@ class SimpleMarket:
 
     def _create_agents(self) -> list[BaseAgent]:
         agents: list[BaseAgent] = []
+        agent_prefix = self.config.strategy_type.value
 
         if self.config.strategy_type == StrategyType.FUNDAMENTAL:
-            for i in range(self.config.num_agents):
-                agents.append(
-                    FundamentalAgent(
-                        agent_id=f"fundamental_{i+1}",
-                        decision_mode=self.config.decision_mode,
-                        initial_cash=self.config.initial_cash
-                    )
-                )
-            return agents
+            agent_cls = FundamentalAgent
+        elif self.config.strategy_type == StrategyType.MOMENTUM:
+            agent_cls = MomentumAgent
+        elif self.config.strategy_type == StrategyType.SPECULATOR:
+            agent_cls = SpeculatorAgent
+        else:
+            raise NotImplementedError(
+                f"Strategy type {self.config.strategy_type} is not implemented yet"
+            )
 
-        raise NotImplementedError(
-            f"Strategy type {self.config.strategy_type} is not implemented yet"
-        )
+        for i in range(self.config.num_agents):
+            agents.append(
+                agent_cls(
+                    agent_id=f"{agent_prefix}_{i + 1}",
+                    decision_mode=self.config.decision_mode,
+                    initial_cash=self.config.initial_cash
+                )
+            )
+        return agents
 
     def _build_observation(self) -> AgentObservation:
         state = self.market_state

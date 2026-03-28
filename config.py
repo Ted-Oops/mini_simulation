@@ -12,8 +12,7 @@ DEFAULT_SEED = 42
 
 
 def build_experiment_config(
-        strategy_type: StrategyType,
-        decision_mode: DecisionMode
+    strategy_type: StrategyType, decision_mode: DecisionMode
 ) -> ExperimentConfig:
     return ExperimentConfig(
         strategy_type=strategy_type,
@@ -26,8 +25,9 @@ def build_experiment_config(
         lot_size=DEFAULT_LOT_SIZE,
         price_impact=DEFAULT_PRICE_IMPACT,
         seed=DEFAULT_SEED,
-        enable_shock=False
+        enable_shock=False,
     )
+
 
 def build_all_experiment_configs() -> list[ExperimentConfig]:
     configs = []

@@ -1,5 +1,11 @@
 from agents.base import BaseAgent
-from models import AgentObservation, DecisionMode, OrderDecision, StrategyType, TradeAction
+from models import (
+    AgentObservation,
+    DecisionMode,
+    OrderDecision,
+    StrategyType,
+    TradeAction,
+)
 
 
 class SpeculatorAgent(BaseAgent):

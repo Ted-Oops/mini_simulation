@@ -10,8 +10,16 @@ DECISION_ORDER = ["rule_based", "half_rule_based", "open_ended"]
 
 
 def _grid_position(strategy_type: str, decision_mode: str) -> tuple[int, int]:
-    row = STRATEGY_ORDER.index(strategy_type) + 1 if strategy_type in STRATEGY_ORDER else -1
-    col = DECISION_ORDER.index(decision_mode) + 1 if decision_mode in DECISION_ORDER else -1
+    row = (
+        STRATEGY_ORDER.index(strategy_type) + 1
+        if strategy_type in STRATEGY_ORDER
+        else -1
+    )
+    col = (
+        DECISION_ORDER.index(decision_mode) + 1
+        if decision_mode in DECISION_ORDER
+        else -1
+    )
     return row, col
 
 
@@ -34,7 +42,9 @@ def _compute_agent_wealth(agent_info: dict, final_price: float) -> float:
     return cash + shares * final_price
 
 
-def save_experiment_report(summary: dict, output_root: str | Path = "artifacts") -> Path:
+def save_experiment_report(
+    summary: dict, output_root: str | Path = "artifacts"
+) -> Path:
     experiment_label = _build_experiment_label(summary)
     output_dir = _ensure_output_dir(output_root, experiment_label)
 
@@ -58,7 +68,9 @@ def save_experiment_report(summary: dict, output_root: str | Path = "artifacts")
     rejected_count_history = summary.get("rejected_count_history", [])
 
     agents = summary.get("agents", [])
-    final_price = summary.get("final_price", price_history[-1] if price_history else 0.0)
+    final_price = summary.get(
+        "final_price", price_history[-1] if price_history else 0.0
+    )
 
     wealth_pairs = []
     for agent_info in agents:
@@ -80,7 +92,9 @@ def save_experiment_report(summary: dict, output_root: str | Path = "artifacts")
     ax1 = axes[0, 0]
     if price_history:
         x_price = list(range(len(price_history)))
-        ax1.plot(x_price, price_history, color="#1f77b4", linewidth=2.2, label="Market Price")
+        ax1.plot(
+            x_price, price_history, color="#1f77b4", linewidth=2.2, label="Market Price"
+        )
     if sue_history:
         x_fv = list(range(1, len(sue_history) + 1))
         ax1.plot(
@@ -110,10 +124,22 @@ def save_experiment_report(summary: dict, output_root: str | Path = "artifacts")
     if net_demand_history:
         x_demand = list(range(1, len(net_demand_history) + 1))
         colors = ["#2ca02c" if v >= 0 else "#d62728" for v in net_demand_history]
-        ax2.bar(x_demand, net_demand_history, color=colors, alpha=0.8, label="Signed Net Demand")
+        ax2.bar(
+            x_demand,
+            net_demand_history,
+            color=colors,
+            alpha=0.8,
+            label="Signed Net Demand",
+        )
     if volume_history:
         x_volume = list(range(1, len(volume_history) + 1))
-        ax2.plot(x_volume, volume_history, color="#4c4c4c", linewidth=1.8, label="Absolute Volume")
+        ax2.plot(
+            x_volume,
+            volume_history,
+            color="#4c4c4c",
+            linewidth=1.8,
+            label="Absolute Volume",
+        )
     ax2.axhline(0, color="black", linewidth=1.0)
     ax2.set_title("Demand and Volume")
     ax2.set_xlabel("Step")
@@ -122,7 +148,12 @@ def save_experiment_report(summary: dict, output_root: str | Path = "artifacts")
 
     ax3 = axes[1, 0]
     has_action_data = any(
-        [buy_count_history, sell_count_history, hold_count_history, rejected_count_history]
+        [
+            buy_count_history,
+            sell_count_history,
+            hold_count_history,
+            rejected_count_history,
+        ]
     )
     if has_action_data:
         x_counts = list(
@@ -133,7 +164,8 @@ def save_experiment_report(summary: dict, output_root: str | Path = "artifacts")
                     len(sell_count_history),
                     len(hold_count_history),
                     len(rejected_count_history),
-                ) + 1,
+                )
+                + 1,
             )
         )
 
@@ -172,7 +204,9 @@ def save_experiment_report(summary: dict, output_root: str | Path = "artifacts")
             )
         ax3.legend()
     else:
-        ax3.text(0.5, 0.5, "No action-count data", ha="center", va="center", fontsize=12)
+        ax3.text(
+            0.5, 0.5, "No action-count data", ha="center", va="center", fontsize=12
+        )
     ax3.set_title("Agent Actions by Step")
     ax3.set_xlabel("Step")
     ax3.set_ylabel("Count")
@@ -184,14 +218,18 @@ def save_experiment_report(summary: dict, output_root: str | Path = "artifacts")
         ax4.bar(agent_ids, wealth_values, color="#17becf", alpha=0.85)
         ax4.tick_params(axis="x", rotation=45)
     else:
-        ax4.text(0.5, 0.5, "No agent wealth data", ha="center", va="center", fontsize=12)
+        ax4.text(
+            0.5, 0.5, "No agent wealth data", ha="center", va="center", fontsize=12
+        )
     ax4.set_title("Final Agent Wealth")
     ax4.set_xlabel("Agent")
     ax4.set_ylabel("Wealth")
 
     if price_history:
         initial_price = price_history[0]
-        final_return = (final_price - initial_price) / initial_price if initial_price != 0 else 0.0
+        final_return = (
+            (final_price - initial_price) / initial_price if initial_price != 0 else 0.0
+        )
     else:
         final_return = 0.0
 

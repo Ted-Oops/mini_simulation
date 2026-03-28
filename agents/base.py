@@ -1,4 +1,11 @@
-from models import AgentObservation, AgentState, DecisionMode, OrderDecision, StrategyType, TradeAction
+from models import (
+    AgentObservation,
+    AgentState,
+    DecisionMode,
+    OrderDecision,
+    StrategyType,
+    TradeAction,
+)
 
 
 class BaseAgent:

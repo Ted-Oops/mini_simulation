@@ -1,14 +1,54 @@
+import argparse
+
 from config import build_experiment_config
 from market import SimpleMarket
 from models import DecisionMode, StrategyType
 from visualization import save_experiment_report
 
 
-def main() -> None:
-    config = build_experiment_config(
-        strategy_type=StrategyType.FUNDAMENTAL,
-        decision_mode=DecisionMode.RULE_BASED,
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Run a mini market simulation experiment."
     )
+    parser.add_argument(
+        "--strategy",
+        choices=[strategy.value for strategy in StrategyType],
+        default=StrategyType.FUNDAMENTAL.value,
+        help="Agent strategy type.",
+    )
+    parser.add_argument(
+        "--mode",
+        choices=[mode.value for mode in DecisionMode],
+        default=DecisionMode.RULE_BASED.value,
+        help="Decision mode.",
+    )
+    parser.add_argument(
+        "--steps",
+        type=int,
+        default=None,
+        help="Override the number of simulation steps.",
+    )
+    parser.add_argument(
+        "--agents",
+        type=int,
+        default=None,
+        help="Override the number of agents.",
+    )
+    return parser.parse_args()
+
+
+def main() -> None:
+    args = parse_args()
+
+    config = build_experiment_config(
+        strategy_type=StrategyType(args.strategy),
+        decision_mode=DecisionMode(args.mode),
+    )
+
+    if args.steps is not None:
+        config.num_steps = args.steps
+    if args.agents is not None:
+        config.num_agents = args.agents
 
     market = SimpleMarket(config)
     market.run_simulation()

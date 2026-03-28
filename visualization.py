@@ -49,7 +49,8 @@ def save_experiment_report(summary: dict, output_root: str | Path = "artifacts")
     price_history = summary.get("price_history", [])
     volume_history = summary.get("volume_history", [])
     net_demand_history = summary.get("net_demand_history", [])
-    fundamental_value_history = summary.get("fundamental_value_history", [])
+    sue_history = summary.get("sue_history", [])
+    reversal_history = summary.get("reversal_history", [])
 
     buy_count_history = summary.get("buy_count_history", [])
     sell_count_history = summary.get("sell_count_history", [])
@@ -58,10 +59,6 @@ def save_experiment_report(summary: dict, output_root: str | Path = "artifacts")
 
     agents = summary.get("agents", [])
     final_price = summary.get("final_price", price_history[-1] if price_history else 0.0)
-
-    if not fundamental_value_history and price_history:
-        initial_fundamental = summary.get("initial_fundamental_value", final_price)
-        fundamental_value_history = [initial_fundamental] * len(price_history)
 
     wealth_pairs = []
     for agent_info in agents:
@@ -75,7 +72,8 @@ def save_experiment_report(summary: dict, output_root: str | Path = "artifacts")
     title = (
         f"Mini Simulation Report: {strategy_type} × {decision_mode} | "
         f"Grid=({row}, {col}) | Steps={summary.get('num_steps', 0)} | "
-        f"Agents={summary.get('num_agents', 0)}"
+        f"Agents={summary.get('num_agents', 0)} | "
+        f"Warm-up={summary.get('bootstrap_steps', 0)}"
     )
     fig.suptitle(title, fontsize=16, fontweight="bold")
 
@@ -83,19 +81,29 @@ def save_experiment_report(summary: dict, output_root: str | Path = "artifacts")
     if price_history:
         x_price = list(range(len(price_history)))
         ax1.plot(x_price, price_history, color="#1f77b4", linewidth=2.2, label="Market Price")
-    if fundamental_value_history:
-        x_fv = list(range(len(fundamental_value_history)))
+    if sue_history:
+        x_fv = list(range(1, len(sue_history) + 1))
         ax1.plot(
             x_fv,
-            fundamental_value_history,
+            sue_history,
             color="#ff7f0e",
             linewidth=2.0,
             linestyle="--",
-            label="Fundamental Value",
+            label="SUE Signal",
         )
-    ax1.set_title("Price Path")
+    if reversal_history:
+        x_rev = list(range(1, len(reversal_history) + 1))
+        ax1.plot(
+            x_rev,
+            reversal_history,
+            color="#9467bd",
+            linewidth=1.8,
+            linestyle=":",
+            label="Reversal Score",
+        )
+    ax1.set_title("Price and Signals")
     ax1.set_xlabel("Step")
-    ax1.set_ylabel("Price")
+    ax1.set_ylabel("Level")
     ax1.legend()
 
     ax2 = axes[0, 1]
@@ -190,6 +198,7 @@ def save_experiment_report(summary: dict, output_root: str | Path = "artifacts")
     footer_text = (
         f"Final Price={final_price:.4f} | "
         f"Final Return={final_return:.2%} | "
+        f"Warm-up={summary.get('bootstrap_steps', 0)} | "
         f"Experiment={experiment_label}"
     )
     fig.text(0.5, 0.01, footer_text, ha="center", fontsize=11)

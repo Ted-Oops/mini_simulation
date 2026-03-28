@@ -34,6 +34,12 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help="Override the number of agents.",
     )
+    parser.add_argument(
+        "--bootstrap-steps",
+        type=int,
+        default=None,
+        help="Override the number of warm-up history steps before step 1.",
+    )
     return parser.parse_args()
 
 
@@ -49,6 +55,8 @@ def main() -> None:
         config.num_steps = args.steps
     if args.agents is not None:
         config.num_agents = args.agents
+    if args.bootstrap_steps is not None:
+        config.bootstrap_steps = args.bootstrap_steps
 
     market = SimpleMarket(config)
     market.run_simulation()
@@ -60,6 +68,7 @@ def main() -> None:
     print(f"decision_mode: {summary['decision_mode']}")
     print(f"num_agents: {summary['num_agents']}")
     print(f"num_steps: {summary['num_steps']}")
+    print(f"bootstrap_steps: {summary['bootstrap_steps']}")
     print(f"final_price: {summary['final_price']:.4f}")
     print(f"price_history: {summary['price_history']}")
     print(f"volume_history: {summary['volume_history']}")

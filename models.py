@@ -37,7 +37,6 @@ class AgentState:
 class MarketState:
     step: int
     price: float
-    fundamental_value: float
     price_history: list[float] = field(default_factory=list)
     return_history: list[float] = field(default_factory=list)
     volume_history: list[int] = field(default_factory=list)
@@ -48,12 +47,16 @@ class MarketState:
 class AgentObservation:
     step: int
     price: float
-    fundamental_value: float
-    mispricing: float
+    sue_signal: float
     momentum_1: float
     momentum_3: float
+    reversal_score: float
     volatility: float
     net_demand: float
+    peer_buy_ratio: float
+    peer_sell_ratio: float
+    peer_hold_ratio: float
+    peer_net_demand: float
     shock: float
 
 @dataclass
@@ -62,8 +65,8 @@ class ExperimentConfig:
     decision_mode: DecisionMode
     num_agents: int
     num_steps: int
+    bootstrap_steps: int
     initial_price: float
-    initial_fundamental_value: float
     initial_cash: float
     lot_size: int = 1
     price_impact: float = 0.01

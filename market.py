@@ -144,17 +144,21 @@ class SimpleMarket:
             if signed_demand == 0 and abs(period_return) > 0.008:
                 signed_demand = 1 if period_return > 0 else -1
 
-            bootstrap_net_demand.append(float(signed_demand))
+            bootstrap_net_demand.append(signed_demand)
 
         return bootstrap_net_demand
 
-    def _generate_bootstrap_volume(self, bootstrap_net_demand: list[float]) -> list[int]:
+    def _generate_bootstrap_volume(
+        self, bootstrap_net_demand: list[float]
+    ) -> list[int]:
         bootstrap_volume: list[int] = []
         base_volume = max(3, self.config.num_agents // 2)
 
         for signed_demand in bootstrap_net_demand:
             extra_turnover = self.rng.randint(0, base_volume + 2)
-            bootstrap_volume.append(int(abs(signed_demand)) + base_volume + extra_turnover)
+            bootstrap_volume.append(
+                int(abs(signed_demand) + base_volume + extra_turnover)
+            )
 
         return bootstrap_volume
 

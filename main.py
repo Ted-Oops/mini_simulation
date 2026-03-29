@@ -1,7 +1,7 @@
 import argparse
 
 from config import build_experiment_config
-from market import SimpleMarket
+from market import OrderBookMarket
 from models import DecisionMode, StrategyType
 from visualization import save_experiment_report
 
@@ -58,7 +58,7 @@ def main() -> None:
     if args.bootstrap_steps is not None:
         config.bootstrap_steps = args.bootstrap_steps
 
-    market = SimpleMarket(config)
+    market = OrderBookMarket(config)
     market.run_simulation()
     summary = market.get_summary()
     output_dir = save_experiment_report(summary)
@@ -69,10 +69,13 @@ def main() -> None:
     print(f"num_agents: {summary['num_agents']}")
     print(f"num_steps: {summary['num_steps']}")
     print(f"bootstrap_steps: {summary['bootstrap_steps']}")
+    print(f"batch_size: {summary['batch_size']}")
+    print(f"initial_shares_per_agent: {summary['initial_shares_per_agent']}")
     print(f"final_price: {summary['final_price']:.4f}")
     print(f"price_history: {summary['price_history']}")
     print(f"volume_history: {summary['volume_history']}")
     print(f"net_demand_history: {summary['net_demand_history']}")
+    print(f"trade_count_history: {summary['trade_count_history']}")
     print()
 
     print("=== Agent States ===")

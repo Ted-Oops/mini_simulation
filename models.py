@@ -31,6 +31,34 @@ class OrderDecision:
 
 
 @dataclass
+class LimitOrder:
+    order_id: str
+    agent_id: str
+    action: TradeAction
+    quantity: int
+    limit_price: float
+    submitted_step: int
+    submitted_batch: int
+    sequence: int
+    reason: str = ""
+    signal_strength: float = 0.0
+
+
+@dataclass
+class TradeExecution:
+    trade_id: str
+    buy_order_id: str
+    sell_order_id: str
+    price: float
+    quantity: int
+    step: int
+    batch: int
+    sequence: int
+    buyer_id: str
+    seller_id: str
+
+
+@dataclass
 class AgentState:
     agent_id: str
     cash: float
@@ -75,7 +103,10 @@ class ExperimentConfig:
     bootstrap_steps: int
     initial_price: float
     initial_cash: float
-    lot_size: int = 1
+    initial_shares_per_agent: int = 5
+    batch_size: int = 3
     price_impact: float = 0.01
+    price_tick: float = 0.1
+    max_order_age_steps: int = 3
+    max_price_offset_ratio: float = 0.03
     seed: int = 42
-    enable_shock: bool = False

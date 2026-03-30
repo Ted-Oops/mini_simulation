@@ -1,3 +1,5 @@
+import hashlib
+
 from models import (
     AgentObservation,
     AgentState,
@@ -25,6 +27,29 @@ class BaseAgent:
             shares=0,
             avg_cost=0.0,
         )
+
+    def _stable_fraction(self, key: str) -> float:
+        payload = f"{self.strategy_type.value}:{self.agent_id}:{key}".encode("utf-8")
+        digest = hashlib.sha256(payload).digest()
+        integer = int.from_bytes(digest[:8], byteorder="big", signed=False)
+        return integer / ((1 << 64) - 1)
+
+    def _stable_uniform(self, key: str, low: float, high: float) -> float:
+        return low + (high - low) * self._stable_fraction(key)
+
+    def wealth(self, price: float) -> float:
+        return self.state.cash + self.state.shares * max(price, 0.0)
+
+    def inventory_ratio(self, price: float) -> float:
+        total_wealth = self.wealth(price)
+        if total_wealth <= 0:
+            return 0.0
+        return (self.state.shares * max(price, 0.0)) / total_wealth
+
+    def unrealized_return(self, price: float) -> float:
+        if self.state.shares <= 0 or self.state.avg_cost <= 0:
+            return 0.0
+        return (price - self.state.avg_cost) / self.state.avg_cost
 
     def can_buy(self, price: float, quantity: int) -> bool:
         if price <= 0 or quantity <= 0:

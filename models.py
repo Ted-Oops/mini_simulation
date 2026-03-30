@@ -70,7 +70,9 @@ class AgentState:
 class MarketState:
     step: int
     price: float
+    mark_price: float
     price_history: list[float] = field(default_factory=list)
+    mark_price_history: list[float] = field(default_factory=list)
     return_history: list[float] = field(default_factory=list)
     volume_history: list[int] = field(default_factory=list)
     net_demand_history: list[float] = field(default_factory=list)

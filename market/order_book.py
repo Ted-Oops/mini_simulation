@@ -190,8 +190,8 @@ class OrderBook:
 
         return len(self.buy_orders) + len(self.sell_orders)
 
-    def reference_price(self) -> float:
-        """返回当前市场参考价。
+    def mark_price(self) -> float:
+        """返回当前订单簿的 quote-based 估值价。
 
         逻辑分三种情况：
         - 两边盘口都存在：取最优买卖价中点

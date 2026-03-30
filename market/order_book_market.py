@@ -33,6 +33,9 @@ class OrderBookMarket:
     - 结算成交、更新统计量、导出实验摘要
     """
 
+    BACKGROUND_REFRESH_INTERVAL_BATCHES = 2
+    BACKGROUND_REPRICE_THRESHOLD_TICKS = 3
+
     def __init__(self, config: ExperimentConfig) -> None:
         """初始化市场、订单簿、agent 和统计容器。"""
 
@@ -48,7 +51,9 @@ class OrderBookMarket:
         self.market_state = MarketState(
             step=0,
             price=config.initial_price,
+            mark_price=config.initial_price,
             price_history=[config.initial_price],
+            mark_price_history=[config.initial_price],
             return_history=[],
             volume_history=[],
             net_demand_history=[],
@@ -79,6 +84,11 @@ class OrderBookMarket:
         self._bootstrap_market_context()
         self._seed_initial_inventory()
         self.order_book.last_trade_price = self.market_state.price
+        self.background_bid_agent_id = "background_bid"
+        self.background_ask_agent_id = "background_ask"
+        self.background_anchor_price = self.market_state.price
+        self.background_batch_clock = 0
+        self.background_last_refresh_clock = -self.BACKGROUND_REFRESH_INTERVAL_BATCHES
 
     def _create_agents(self) -> list[BaseAgent]:
         """根据实验配置实例化一组同策略 agent。"""
@@ -121,10 +131,12 @@ class OrderBookMarket:
         bootstrap_volume = self._generate_bootstrap_volume(bootstrap_net_demand)
 
         self.market_state.price_history = bootstrap_prices
+        self.market_state.mark_price_history = list(bootstrap_prices)
         self.market_state.return_history = bootstrap_returns
         self.market_state.net_demand_history = bootstrap_net_demand
         self.market_state.volume_history = bootstrap_volume
         self.market_state.price = bootstrap_prices[-1]
+        self.market_state.mark_price = bootstrap_prices[-1]
 
         self._seed_peer_state_from_bootstrap(bootstrap_returns)
 
@@ -450,6 +462,44 @@ class OrderBookMarket:
         self.order_sequence += 1
         return self.order_sequence
 
+    def _refresh_mark_price(self) -> float:
+        """根据当前盘口刷新 quote-based mark price。"""
+
+        self.market_state.mark_price = self.order_book.mark_price()
+        return self.market_state.mark_price
+
+    def _background_orders(self) -> tuple[LimitOrder | None, LimitOrder | None]:
+        """读取当前仍留在簿中的背景买卖单。"""
+
+        bid_order = self.order_book.agent_orders.get(self.background_bid_agent_id)
+        ask_order = self.order_book.agent_orders.get(self.background_ask_agent_id)
+        return bid_order, ask_order
+
+    def _should_refresh_background_liquidity(
+        self,
+        anchor_price: float,
+        bid_order: LimitOrder | None,
+        ask_order: LimitOrder | None,
+    ) -> bool:
+        """判断当前 batch 开始前是否需要刷新背景流动性。"""
+
+        if bid_order is None or ask_order is None:
+            return True
+
+        tick = max(self.config.price_tick, 0.01)
+        if (
+            self.background_batch_clock - self.background_last_refresh_clock
+            >= self.BACKGROUND_REFRESH_INTERVAL_BATCHES
+        ):
+            return True
+        if abs(anchor_price - self.background_anchor_price) >= (
+            tick * self.BACKGROUND_REPRICE_THRESHOLD_TICKS
+        ):
+            return True
+        if bid_order.limit_price >= anchor_price or ask_order.limit_price <= anchor_price:
+            return True
+        return False
+
     def _derive_limit_price(
         self,
         agent: BaseAgent,
@@ -578,27 +628,48 @@ class OrderBookMarket:
         )
         agent.apply_trade(execution_decision, execution_price)
 
-    def _inject_batch_liquidity(self, step: int, batch: int) -> list[str]:
-        """向当前 batch 注入一层很薄的背景流动性。"""
+    def _replace_background_liquidity(
+        self,
+        step: int,
+        batch: int,
+        reference_price: float,
+    ) -> None:
+        """按给定锚点整组替换背景买卖单。"""
 
-        reference_price = max(self.order_book.reference_price(), self.config.price_tick)
+        self.order_book.cancel_agent_order(self.background_bid_agent_id)
+        self.order_book.cancel_agent_order(self.background_ask_agent_id)
+
         liquidity_depth = max(2, self.config.num_agents // 3)
         spread_ratio = 0.003 + self.rng.uniform(0.0, 0.002)
+        tick = max(self.config.price_tick, 0.01)
+        strict_bid_cap = max(
+            math.floor((reference_price - 1e-9) / tick) * tick,
+            tick,
+        )
+        strict_ask_floor = max(
+            math.ceil((reference_price + 1e-9) / tick) * tick,
+            tick,
+        )
+        bid_limit_price = self._align_limit_price(
+            reference_price * (1 - spread_ratio),
+            TradeAction.BUY,
+        )
+        ask_limit_price = self._align_limit_price(
+            reference_price * (1 + spread_ratio),
+            TradeAction.SELL,
+        )
+        bid_limit_price = min(bid_limit_price, strict_bid_cap)
+        ask_limit_price = max(ask_limit_price, strict_ask_floor)
 
         bid_sequence = self._next_sequence()
         ask_sequence = self._next_sequence()
-        bid_agent_id = f"external_bid_{step}_{batch}"
-        ask_agent_id = f"external_ask_{step}_{batch}"
 
         bid_order = LimitOrder(
-            order_id=f"{bid_agent_id}_order",
-            agent_id=bid_agent_id,
+            order_id=f"{self.background_bid_agent_id}_{step}_{batch}_{bid_sequence}",
+            agent_id=self.background_bid_agent_id,
             action=TradeAction.BUY,
             quantity=liquidity_depth,
-            limit_price=self._align_limit_price(
-                reference_price * (1 - spread_ratio),
-                TradeAction.BUY,
-            ),
+            limit_price=bid_limit_price,
             submitted_step=step,
             submitted_batch=batch,
             sequence=bid_sequence,
@@ -606,14 +677,11 @@ class OrderBookMarket:
             signal_strength=0.0,
         )
         ask_order = LimitOrder(
-            order_id=f"{ask_agent_id}_order",
-            agent_id=ask_agent_id,
+            order_id=f"{self.background_ask_agent_id}_{step}_{batch}_{ask_sequence}",
+            agent_id=self.background_ask_agent_id,
             action=TradeAction.SELL,
             quantity=liquidity_depth,
-            limit_price=self._align_limit_price(
-                reference_price * (1 + spread_ratio),
-                TradeAction.SELL,
-            ),
+            limit_price=ask_limit_price,
             submitted_step=step,
             submitted_batch=batch,
             sequence=ask_sequence,
@@ -623,7 +691,42 @@ class OrderBookMarket:
 
         self.order_book.add_order(bid_order)
         self.order_book.add_order(ask_order)
-        return [bid_agent_id, ask_agent_id]
+        self.background_anchor_price = reference_price
+        self.background_last_refresh_clock = self.background_batch_clock
+
+    def _maintain_background_liquidity(self, step: int, batch: int) -> None:
+        """维护跨 batch 留存的背景流动性。
+
+        当前规则是：
+        - 所有背景挂单都锚定在最新成交价两侧
+        - 默认每隔固定数量的 batch 刷新一次
+        - 如果任一侧被吃掉，或最新成交价已明显偏离旧锚点，则提前刷新
+        """
+
+        self.background_batch_clock += 1
+        reference_price = max(self.market_state.price, self.config.price_tick)
+        current_bid_order, current_ask_order = self._background_orders()
+        if not self._should_refresh_background_liquidity(
+            reference_price,
+            current_bid_order,
+            current_ask_order,
+        ):
+            return
+
+        self._replace_background_liquidity(step, batch, reference_price)
+
+    def _realign_background_liquidity_after_trades(self, step: int, batch: int) -> None:
+        """当最新成交价打穿旧背景报价时，立即按新价位重挂。"""
+
+        reference_price = max(self.market_state.price, self.config.price_tick)
+        current_bid_order, current_ask_order = self._background_orders()
+        if (
+            current_bid_order is None
+            or current_ask_order is None
+            or current_bid_order.limit_price >= reference_price
+            or current_ask_order.limit_price <= reference_price
+        ):
+            self._replace_background_liquidity(step, batch, reference_price)
 
     def _settle_trade(self, trade: TradeExecution) -> None:
         """对一笔成交执行资金和持仓结算。"""
@@ -712,16 +815,14 @@ class OrderBookMarket:
             for agent in batch_agents:
                 self.order_book.cancel_agent_order(agent.agent_id)
 
-            liquidity_agent_ids = self._inject_batch_liquidity(
+            self._maintain_background_liquidity(
                 step=current_step,
                 batch=batch_index,
             )
-            self.market_state.price = self.order_book.reference_price()
-            batch_price = self.market_state.price
+            self._refresh_mark_price()
             batch_orders: list[LimitOrder] = []
 
             for agent in batch_agents:
-                self.market_state.price = batch_price
                 observation = self._build_observation(agent)
                 decision = agent.decide(observation)
 
@@ -763,16 +864,23 @@ class OrderBookMarket:
                 self._settle_trade(trade)
                 total_volume += trade.quantity
             trade_count += len(batch_trades)
+            if batch_trades:
+                self.market_state.price = batch_trades[-1].price
+                self._realign_background_liquidity_after_trades(
+                    step=current_step,
+                    batch=batch_index,
+                )
 
-            for liquidity_agent_id in liquidity_agent_ids:
-                self.order_book.cancel_agent_order(liquidity_agent_id)
-            self.market_state.price = self.order_book.reference_price()
+            self._refresh_mark_price()
 
-        closing_price = self.order_book.reference_price()
+        closing_price = self.market_state.price
+        closing_mark_price = self._refresh_mark_price()
 
         self.market_state.step += 1
         self.market_state.price = closing_price
+        self.market_state.mark_price = closing_mark_price
         self.market_state.price_history.append(closing_price)
+        self.market_state.mark_price_history.append(closing_mark_price)
         self.market_state.volume_history.append(total_volume)
         self.market_state.net_demand_history.append(total_net_demand)
         self.market_state.return_history.append(
@@ -831,10 +939,18 @@ class OrderBookMarket:
             "max_order_age_steps": self.config.max_order_age_steps,
             "price_tick": self.config.price_tick,
             "final_price": self.market_state.price,
+            "final_mark_price": self.market_state.mark_price,
             "price_history": simulation_price_history,
+            "submitted_net_demand_history": simulation_net_demand_history,
+            "mark_price_history": self.market_state.mark_price_history[
+                self.bootstrap_steps :
+            ],
             "volume_history": simulation_volume_history,
             "net_demand_history": simulation_net_demand_history,
             "bootstrap_price_history": self.market_state.price_history[
+                : self.bootstrap_steps + 1
+            ],
+            "bootstrap_mark_price_history": self.market_state.mark_price_history[
                 : self.bootstrap_steps + 1
             ],
             "bootstrap_return_history": self.market_state.return_history[
@@ -876,6 +992,8 @@ class OrderBookMarket:
                     "avg_cost": agent.state.avg_cost,
                     "wealth": agent.state.cash
                     + agent.state.shares * self.market_state.price,
+                    "mark_wealth": agent.state.cash
+                    + agent.state.shares * self.market_state.mark_price,
                 }
                 for agent in self.agents
             ],

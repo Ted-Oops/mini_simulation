@@ -72,6 +72,7 @@ def main() -> None:
     print(f"batch_size: {summary['batch_size']}")
     print(f"initial_shares_per_agent: {summary['initial_shares_per_agent']}")
     print(f"final_price: {summary['final_price']:.4f}")
+    print(f"final_mark_price: {summary['final_mark_price']:.4f}")
     print(f"price_history: {summary['price_history']}")
     print(f"volume_history: {summary['volume_history']}")
     print(f"net_demand_history: {summary['net_demand_history']}")

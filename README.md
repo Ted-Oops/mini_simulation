@@ -21,6 +21,12 @@
 
 当前已经稳定跑通的是第一列，也就是三类 agent 的 `rule_based` 基线。
 
+当前这三类 `rule_based` 模板的含义是：
+
+- `fundamental`：围绕估计公允价值与市场价格的偏离做渐进式再平衡
+- `momentum`：围绕趋势延续、回撤风险、止损与止盈做仓位调整
+- `speculator`：围绕同伴订单流、短期价格响应和快速库存管理做机会交易
+
 ## 当前实现状态
 
 已完成：
@@ -31,6 +37,7 @@
   - `momentum`
   - `speculator`
 - `rule_based` 决策模式
+- 三类更贴近真实金融含义的 `rule_based` 行为模板
 - 命令行实验入口
 - 正式交易前的 `warm-up` 市场历史注入
 - 基于 batch 的限价订单簿
@@ -163,6 +170,7 @@ uv run python main.py --strategy speculator --mode rule_based --steps 50 --boots
 - `batch_count_history`
 - `best_bid_history`
 - `best_ask_history`
+- `mark_price_history`
 - `open_order_count_history`
 - `trade_history`
 - 期末仍未成交的买卖挂单
@@ -242,8 +250,12 @@ mini_simulation/artifacts/
 
 当前版本采用的是一个很简洁的基线实现：
 
-- 一档被动买单
-- 一档被动卖单
+- 以最新成交价作为流动性锚点
+- 在买一和卖一各放一笔背景挂单
+- 买价只会挂在最新成交价之下，卖价只会挂在最新成交价之上
+- 背景挂单会跨 batch 留存，默认每 `2` 个 batch 刷新一次
+- 如果任一侧被吃掉，或者最新成交价相对旧锚点偏离超过 `3` 个 tick，会提前刷新
+- 背景流动性只服务撮合，不再回写真实市场价
 
 它的作用不是替代真实 agent，而是提供一个最小对手盘底座，避免整个市场因为没有反向订单而长期零成交。
 
@@ -259,19 +271,23 @@ mini_simulation/artifacts/
 
 这让买卖两侧都能从第一轮起真实存在。
 
-### 8. 价格更新不再依赖线性净需求冲击
+### 8. 成交价与 quote-based mark price 已经分离
 
 旧版本的价格更新依赖：
 
 - 汇总净需求
 - 用线性 `price impact` 直接推下一期价格
 
-现在价格主要由订单簿决定：
+现在订单簿里有两种不同含义的价格：
 
-- 有成交时，最近成交价会更新市场价格
-- 没有成交时，会使用订单簿最优报价构造一个保守的 quote-based mark price
+- `price_history`：真实市场价，记录每一步最后成交价
+- `mark_price_history`：诊断性估值价，按盘口报价构造，用于观察簿内状态
 
-因此 `net_demand_history` 仍然保留，但它的含义已经变成“本轮提交订单的方向性失衡”，而不是直接驱动价格的唯一变量。
+因此：
+
+- quote-based mark price 不会再覆盖真实市场价
+- 如果某一步没有新成交，真实市场价保持上一笔成交价
+- `net_demand_history` 仍然表示“本轮提交订单的方向性失衡”，而不是直接驱动价格的唯一变量
 
 ### 9. Warm-Up 仍然保留
 
@@ -288,7 +304,6 @@ mini_simulation/artifacts/
 当前生成的图表主要包括：
 
 - 价格路径
-- 关键模拟信号叠加
 - 净需求与成交量
 - 每期买 / 卖 / 观望数量
 - 最终 agent 财富分布
@@ -297,6 +312,7 @@ mini_simulation/artifacts/
 
 - `volume_history` 表示已成交量
 - `net_demand_history` 表示订单方向失衡
+- `price_history` 表示最后成交价
 
 ## 当前局限
 

@@ -1,6 +1,6 @@
 [project]
 name = "mini-simulation"
-version = "0.2.2"
+version = "0.2.5"
 description = "Lightweight multi-agent market simulation sandbox with a batch-based price-time-priority order book."
 readme = "README.md"
 requires-python = ">=3.12"

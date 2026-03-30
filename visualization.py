@@ -174,7 +174,7 @@ def save_experiment_report(
             markersize=4.5,
             markerfacecolor="#ffffff",
             markeredgewidth=1.2,
-            label="Market Price",
+            label="Last Trade Price",
         )
         ax1.fill_between(
             x_price,
@@ -189,7 +189,7 @@ def save_experiment_report(
         ax1.text(
             0.5, 0.5, "No price data", ha="center", va="center", fontsize=12
         )
-    ax1.set_title("Market Price Path", fontsize=13, fontweight="bold")
+    ax1.set_title("Last Trade Price Path", fontsize=13, fontweight="bold")
     ax1.set_xlabel("Step")
     ax1.set_ylabel("Price")
 

@@ -109,19 +109,24 @@ class FundamentalAgent(BaseAgent):
         )
 
     def _decide_half_rule_based(self, observation: AgentObservation) -> OrderDecision:
-        return OrderDecision(
-            agent_id=self.agent_id,
-            action=TradeAction.HOLD,
-            quantity=0,
-            reason="half-rule-based mode is not implemented yet",
-            signal_strength=0.0,
+        rule_decision = self._decide_rule_based(observation)
+        return self._decide_with_llm(
+            observation=observation,
+            decision_mode=DecisionMode.HALF_RULE_BASED,
+            allowed_actions=self._half_rule_allowed_actions(
+                rule_decision,
+                observation,
+            ),
+            fallback_decision=rule_decision,
+            rule_decision=rule_decision,
         )
 
     def _decide_open_ended(self, observation: AgentObservation) -> OrderDecision:
-        return OrderDecision(
-            agent_id=self.agent_id,
-            action=TradeAction.HOLD,
-            quantity=0,
-            reason="open-ended mode is not implemented yet",
-            signal_strength=0.0,
+        fallback_decision = self._decide_rule_based(observation)
+        return self._decide_with_llm(
+            observation=observation,
+            decision_mode=DecisionMode.OPEN_ENDED,
+            allowed_actions=self._legal_trade_actions(observation),
+            fallback_decision=fallback_decision,
+            rule_decision=None,
         )

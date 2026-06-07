@@ -4,7 +4,7 @@ from datetime import datetime
 from pathlib import Path
 
 import matplotlib.pyplot as plt
-from matplotlib import colors as mcolors
+from matplotlib import colors as m_colors
 
 
 STRATEGY_ORDER = ["fundamental", "momentum", "speculator"]
@@ -73,7 +73,7 @@ def _style_axis(ax: plt.Axes) -> None:
     ax.yaxis.label.set_color(TEXT_COLOR)
 
 
-def _set_dynamic_ylim(
+def _set_dynamic_y_lim(
     ax: plt.Axes,
     values: list[float],
     pad_ratio: float,
@@ -95,18 +95,20 @@ def _blend_hex_colors(start_hex: str, end_hex: str, count: int) -> list[tuple[fl
     if count <= 0:
         return []
     if count == 1:
-        return [mcolors.to_rgb(end_hex)]
+        return [m_colors.to_rgb(end_hex)]
 
-    start = mcolors.to_rgb(start_hex)
-    end = mcolors.to_rgb(end_hex)
+    start = m_colors.to_rgb(start_hex)
+    end = m_colors.to_rgb(end_hex)
     colors: list[tuple[float, float, float]] = []
     for index in range(count):
         weight = index / (count - 1)
+        blended_color: tuple[float, float, float] = (
+            float(start[0] * (1 - weight) + end[0] * weight),
+            float(start[1] * (1 - weight) + end[1] * weight),
+            float(start[2] * (1 - weight) + end[2] * weight),
+        )
         colors.append(
-            tuple(
-                start[channel] * (1 - weight) + end[channel] * weight
-                for channel in range(3)
-            )
+            blended_color
         )
     return colors
 
@@ -148,7 +150,7 @@ def save_experiment_report(
         wealth_pairs.append((agent_info.get("agent_id", "unknown"), wealth))
     wealth_pairs.sort(key=lambda x: x[1], reverse=True)
 
-    plt.style.use("seaborn-v0_8-whitegrid")
+    plt.style.use("seaborn-v0_8-white-grid")
     fig, axes = plt.subplots(2, 2, figsize=(16, 10.5), constrained_layout=True)
     fig.patch.set_facecolor(FIGURE_BG)
 
@@ -183,7 +185,7 @@ def save_experiment_report(
             color=PRICE_FILL,
             alpha=0.18,
         )
-        _set_dynamic_ylim(ax1, list(price_history), pad_ratio=0.18, min_pad=0.12)
+        _set_dynamic_y_lim(ax1, list(price_history), pad_ratio=0.18, min_pad=0.12)
         ax1.legend(frameon=False, loc="upper left")
     else:
         ax1.text(
@@ -339,7 +341,7 @@ def save_experiment_report(
             linestyle="--",
             label="Average Wealth",
         )
-        _set_dynamic_ylim(ax4, wealth_values, pad_ratio=0.18, min_pad=8.0)
+        _set_dynamic_y_lim(ax4, wealth_values, pad_ratio=0.18, min_pad=8.0)
         ax4.tick_params(axis="x", rotation=45)
         ax4.legend(frameon=False, loc="upper left")
     else:

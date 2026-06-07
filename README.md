@@ -10,16 +10,16 @@
 
 | 策略类型 \ 决策模式 | `rule_based` | `half_rule_based` | `open_ended` |
 | --- | --- | --- | --- |
-| `fundamental` | 已接入 | 预留 | 预留 |
-| `momentum` | 已接入 | 预留 | 预留 |
-| `speculator` | 已接入 | 预留 | 预留 |
+| `fundamental` | 已接入 | 已接入 LLM 决策接口 | 已接入 LLM 决策接口 |
+| `momentum` | 已接入 | 已接入 LLM 决策接口 | 已接入 LLM 决策接口 |
+| `speculator` | 已接入 | 已接入 LLM 决策接口 | 已接入 LLM 决策接口 |
 
 也就是说，后续实验始终可以理解为：
 
 - 行：交易者类型
 - 列：决策自由度
 
-当前已经稳定跑通的是第一列，也就是三类 agent 的 `rule_based` 基线。
+当前已经稳定跑通的是第一列，也就是三类 agent 的 `rule_based` 基线。第二、三列已经接入 OpenAI-compatible Chat Completions 接口；如果本地没有配置 API key，会自动退回对应 agent 的本地规则决策，保证实验流程仍然可运行。
 
 当前这三类 `rule_based` 模板的含义是：
 
@@ -44,13 +44,14 @@
 - 价格优先、时间优先的撮合规则
 - 未成交订单留存、替换与过期清理
 - 实验结果可视化与报告导出
+- OpenAI-compatible LLM 决策客户端
+- `half_rule_based` 与 `open_ended` 的 prompt、JSON 解析、本地交易约束校验和 fallback
 - 使用 `uv` 管理虚拟环境与依赖
 
 尚未完成：
 
-- `half_rule_based`
-- `open_ended`
 - 更强的 agent 异质性与仓位管理
+- 更细致的 LLM prompt 调优与批量实验评估
 - 接入真实外部金融数据
 
 ## 项目结构
@@ -68,10 +69,19 @@ mini_simulation/
 ├── main.py                 # 命令行入口
 ├── market/
 │   ├── __init__.py
+│   ├── agent_factory.py    # agent 实例化
+│   ├── batching.py         # batch 切分与同 batch LLM 并行决策
+│   ├── bootstrap.py        # warm-up 历史与初始持仓
+│   ├── liquidity.py        # 背景流动性维护
+│   ├── observation.py      # agent observation 构造
 │   ├── order_book.py       # 订单簿本体：挂单、排序、撮合
-│   └── order_book_market.py # 市场仿真：batch、agent、结算、统计
+│   ├── order_book_market.py # 市场仿真主循环：step、batch、撮合、统计推进
+│   ├── orders.py           # OrderDecision 到 LimitOrder 的转换与成交结算
+│   └── summary.py          # 实验摘要导出
 ├── models.py               # 枚举与数据结构
-├── prompts.py              # 预留给后续 LLM prompt 逻辑
+├── prompts.py              # LLM prompt 构造逻辑
+├── llm_client.py           # OpenAI-compatible LLM 客户端
+├── local_api_config.example.py # 本地 API 配置示例
 ├── README.md
 └── visualization.py        # 图表与实验报告生成
 ```
@@ -146,6 +156,8 @@ uv run python main.py
 ```powershell
 uv run python main.py --strategy momentum --mode rule_based --steps 50 --agents 12
 uv run python main.py --strategy speculator --mode rule_based --steps 50 --bootstrap-steps 24
+uv run python main.py --strategy fundamental --mode half_rule_based --steps 20
+uv run python main.py --strategy speculator --mode open_ended --steps 20
 ```
 
 支持的参数包括：
@@ -155,6 +167,36 @@ uv run python main.py --strategy speculator --mode rule_based --steps 50 --boots
 - `--steps`：覆盖默认模拟轮数
 - `--agents`：覆盖默认智能体数量
 - `--bootstrap-steps`：正式交易开始前注入的 warm-up 历史长度
+
+### LLM API 配置
+
+`half_rule_based` 和 `open_ended` 会读取 OpenAI-compatible Chat Completions 配置。
+
+推荐使用环境变量：
+
+```powershell
+$env:MINI_SIM_API_KEY="your-api-key"
+$env:MINI_SIM_BASE_URL="http://172.20.16.1:60500"
+$env:MINI_SIM_MODEL="gpt-5.5"
+```
+
+也可以使用本地 `local_api_config.py`。该文件已加入 `.gitignore`，不会进入版本控制；仓库里保留了 [local_api_config.example.py](/D:/Files/undergraduate_research/mini_simulation/local_api_config.example.py) 作为字段示例。
+
+LLM 输出必须是一个 JSON 对象，并且会在本地再次校验：
+
+```json
+{
+  "action": "buy|sell|hold",
+  "quantity": 0,
+  "limit_price": null,
+  "reason": "brief reason",
+  "signal_strength": 0.0
+}
+```
+
+如果 API 不可用、返回格式无法解析，或输出动作违反现金、持仓、数量、价格偏离等本地约束，系统会退回本地规则决策。
+
+LLM 模式下，同一个市场 batch 内的 agent 决策会并行请求 API；收齐结果后仍按原始 batch 顺序分配订单 sequence，并统一入簿撮合。因此并行只减少等待时间，不改变市场时间优先原则。
 
 ## 输出结果
 
@@ -322,7 +364,7 @@ mini_simulation/artifacts/
 - `rule_based` 逻辑仍然偏粗
 - 外部背景流动性还是简化处理，不是真正建模的做市商
 - 暂时只有单资产
-- `half_rule_based` 和 `open_ended` 仍是占位实现
+- `half_rule_based` 和 `open_ended` 已接入 LLM 决策通道，但 prompt 与策略表现仍需要系统评估
 - 当前信号仍然是模拟生成的，而不是真实市场数据
 
 ## 计划中的下一步
@@ -330,10 +372,11 @@ mini_simulation/artifacts/
 后续更值得推进的方向是：
 
 1. 增加 agent 异质性，包括风险偏好、持仓约束、下单 aggressiveness
-2. 完成 `half_rule_based` 和 `open_ended`
-3. 重点打磨 LLM 提示词设计与决策接口
+2. 系统评估 `half_rule_based` 和 `open_ended` 的九宫格结果
+3. 重点打磨 LLM 提示词设计与 `rule_based` 基线规则
 4. 将当前模拟信号逐步替换为真实下载的数据
 5. 在单资产机制稳定后，再考虑多资产和资金约束联动
+6. 在主要实验路径稳定后，整理整体目录结构，让市场机制、agent 决策、LLM 接口、实验运行和报告输出分层更清晰
 
 ## 维护说明
 
@@ -343,5 +386,6 @@ mini_simulation/artifacts/
 
 - 文件尽量职责单一，不要把所有逻辑堆到一个文件里
 - 市场逻辑与 agent 逻辑尽量分离
+- 后续目录重构可以优先考虑拆出 `llm/`、`experiments/`、`reports/` 等层次，避免根目录继续承载过多职责
 - 自动生成产物不要提交到版本控制
 - 任何影响撮合口径的修改，都要同步更新 `README` 和项目版本号

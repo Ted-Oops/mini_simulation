@@ -1,6 +1,7 @@
 import argparse
 
 from config import build_experiment_config
+from llm_client import get_default_llm_client
 from market import OrderBookMarket
 from models import DecisionMode, StrategyType
 from visualization import save_experiment_report
@@ -58,8 +59,42 @@ def main() -> None:
     if args.bootstrap_steps is not None:
         config.bootstrap_steps = args.bootstrap_steps
 
+    if config.decision_mode != DecisionMode.RULE_BASED:
+        llm_client = get_default_llm_client()
+        if llm_client is not None and llm_client.is_configured:
+            print(
+                "llm_client: enabled "
+                f"({llm_client.config.model} @ {llm_client.config.base_url})"
+            )
+        else:
+            print("llm_client: missing API key; using local rule fallback")
+
     market = OrderBookMarket(config)
-    market.run_simulation()
+    if config.decision_mode == DecisionMode.RULE_BASED:
+        market.run_simulation()
+    else:
+        estimated_requests = config.num_steps * len(market.agents)
+        batches_per_step = (
+            len(market.agents) + max(config.batch_size, 1) - 1
+        ) // max(config.batch_size, 1)
+        print(
+            "llm_progress: "
+            f"running about {estimated_requests} LLM decisions in "
+            f"{batches_per_step} batch-parallel groups per step "
+            f"({len(market.agents)} agents × {config.num_steps} steps)",
+            flush=True,
+        )
+        for _ in range(config.num_steps):
+            market.run_step()
+            latest_volume = market.market_state.volume_history[-1]
+            latest_trades = market.trade_count_history[-1]
+            print(
+                "llm_progress: "
+                f"step {market.market_state.step}/{config.num_steps}, "
+                f"price={market.market_state.price:.4f}, "
+                f"volume={latest_volume}, trades={latest_trades}",
+                flush=True,
+            )
     summary = market.get_summary()
     output_dir = save_experiment_report(summary)
 

@@ -19,6 +19,10 @@ ENV/
 .mypy_cache/
 .ruff_cache/
 
+# Local secrets
+.env
+local_api_config.py
+
 # OS files
 .DS_Store
 Thumbs.db

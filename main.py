@@ -7,7 +7,21 @@ from models import DecisionMode, StrategyType
 from visualization import save_experiment_report
 
 
-def parse_args() -> argparse.Namespace:
+def positive_int(value: str) -> int:
+    parsed = int(value)
+    if parsed < 1:
+        raise argparse.ArgumentTypeError("must be an integer >= 1")
+    return parsed
+
+
+def nonnegative_int(value: str) -> int:
+    parsed = int(value)
+    if parsed < 0:
+        raise argparse.ArgumentTypeError("must be an integer >= 0")
+    return parsed
+
+
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Run a mini market simulation experiment."
     )
@@ -25,45 +39,50 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--steps",
-        type=int,
+        type=positive_int,
         default=None,
         help="Override the number of simulation steps.",
     )
     parser.add_argument(
         "--agents",
-        type=int,
+        type=positive_int,
         default=None,
         help="Override the number of agents.",
     )
     parser.add_argument(
         "--bootstrap-steps",
-        type=int,
+        type=nonnegative_int,
         default=None,
         help="Override the number of warm-up history steps before step 1.",
     )
-    return parser.parse_args()
+    return parser.parse_args(argv)
 
 
 def main() -> None:
     args = parse_args()
 
-    config = build_experiment_config(
-        strategy_type=StrategyType(args.strategy),
-        decision_mode=DecisionMode(args.mode),
-    )
-
-    if args.steps is not None:
-        config.num_steps = args.steps
-    if args.agents is not None:
-        config.num_agents = args.agents
-    if args.bootstrap_steps is not None:
-        config.bootstrap_steps = args.bootstrap_steps
+    try:
+        config = build_experiment_config(
+            strategy_type=StrategyType(args.strategy),
+            decision_mode=DecisionMode(args.mode),
+        )
+        if args.steps is not None:
+            config.num_steps = args.steps
+        if args.agents is not None:
+            config.num_agents = args.agents
+        if args.bootstrap_steps is not None:
+            config.bootstrap_steps = args.bootstrap_steps
+        config.validate()
+        if config.decision_mode != DecisionMode.RULE_BASED:
+            get_default_llm_client()
+    except ValueError as exc:
+        raise SystemExit(f"Configuration error: {exc}") from None
 
     if config.decision_mode != DecisionMode.RULE_BASED:
         llm_client = get_default_llm_client()
         if llm_client is not None and llm_client.is_configured:
             print(
-                "llm_client: enabled "
+                "llm_client: configured "
                 f"({llm_client.config.model} @ {llm_client.config.base_url})"
             )
         else:
@@ -92,7 +111,9 @@ def main() -> None:
                 "llm_progress: "
                 f"step {market.market_state.step}/{config.num_steps}, "
                 f"price={market.market_state.price:.4f}, "
-                f"volume={latest_volume}, trades={latest_trades}",
+                f"volume={latest_volume}, trades={latest_trades}, "
+                f"llm_success={market.llm_success_count_history[-1]}, "
+                f"llm_fallback={market.llm_fallback_count_history[-1]}",
                 flush=True,
             )
     summary = market.get_summary()
@@ -112,6 +133,9 @@ def main() -> None:
     print(f"volume_history: {summary['volume_history']}")
     print(f"net_demand_history: {summary['net_demand_history']}")
     print(f"trade_count_history: {summary['trade_count_history']}")
+    print(f"llm_stats: {summary['llm_stats']}")
+    if summary["llm_stats"]["fallback_count"]:
+        print("llm_result: rule fallback occurred; check llm_stats before evaluating LLM results")
     print()
 
     print("=== Agent States ===")

@@ -1,6 +1,8 @@
 from dataclasses import dataclass, field
 from enum import Enum
 
+from validation import require_integer, require_number
+
 
 class StrategyType(str, Enum):
     FUNDAMENTAL = "fundamental"
@@ -28,6 +30,8 @@ class OrderDecision:
     limit_price: float | None = None
     reason: str = ""
     signal_strength: float = 0.0
+    decision_source: str = "rule_based"
+    fallback_reason: str | None = None
 
 
 @dataclass
@@ -112,3 +116,25 @@ class ExperimentConfig:
     max_order_age_steps: int = 3
     max_price_offset_ratio: float = 0.03
     seed: int = 42
+
+    def __post_init__(self) -> None:
+        self.validate()
+
+    def validate(self) -> None:
+        """Validate again at market startup, including overrides made after construction."""
+        if not isinstance(self.strategy_type, StrategyType):
+            raise ValueError("strategy_type must be a StrategyType")
+        if not isinstance(self.decision_mode, DecisionMode):
+            raise ValueError("decision_mode must be a DecisionMode")
+        for name in ("num_agents", "num_steps", "batch_size"):
+            require_integer(name, getattr(self, name), minimum=1)
+        for name in ("bootstrap_steps", "initial_shares_per_agent", "max_order_age_steps"):
+            require_integer(name, getattr(self, name), minimum=0)
+        require_integer("seed", self.seed)
+        require_number("initial_price", self.initial_price, minimum=0, exclusive=True)
+        require_number("initial_cash", self.initial_cash, minimum=0)
+        require_number("price_tick", self.price_tick, minimum=0.01)
+        require_number("price_impact", self.price_impact, minimum=0)
+        require_number("max_price_offset_ratio", self.max_price_offset_ratio, minimum=0)
+        if self.max_price_offset_ratio >= 1:
+            raise ValueError("max_price_offset_ratio must be less than 1")

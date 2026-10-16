@@ -1,4 +1,5 @@
 import hashlib
+import math
 from typing import Any
 
 from llm_client import get_default_llm_client
@@ -157,6 +158,7 @@ class BaseAgent:
             return self._fallback_decision(
                 fallback_decision,
                 f"{decision_mode.value} fallback because {reason}",
+                fallback_reason=client.last_error_code or "llm_unavailable",
             )
 
         return self._validated_llm_decision(
@@ -210,6 +212,7 @@ class BaseAgent:
         self,
         fallback_decision: OrderDecision,
         reason_prefix: str,
+        fallback_reason: str = "invalid_decision",
     ) -> OrderDecision:
         reason = f"{reason_prefix}; local decision: {fallback_decision.reason}"
         return OrderDecision(
@@ -219,6 +222,8 @@ class BaseAgent:
             limit_price=fallback_decision.limit_price,
             reason=reason[:260],
             signal_strength=fallback_decision.signal_strength,
+            decision_source="fallback",
+            fallback_reason=fallback_reason,
         )
 
     def _validated_llm_decision(
@@ -230,11 +235,26 @@ class BaseAgent:
         fallback_decision: OrderDecision,
         decision_mode: DecisionMode,
     ) -> OrderDecision:
+        for field in ("quantity", "limit_price", "signal_strength", "confidence"):
+            raw_value = payload.get(field)
+            if raw_value is None:
+                continue
+            try:
+                valid = not isinstance(raw_value, bool) and math.isfinite(float(raw_value))
+            except (TypeError, ValueError, OverflowError):
+                valid = False
+            if not valid:
+                return self._fallback_decision(
+                    fallback_decision,
+                    f"{decision_mode.value} fallback because LLM {field} was invalid",
+                    fallback_reason=f"invalid_{field}",
+                )
         action_text = str(payload.get("action", "")).strip().lower()
         if action_text not in allowed_actions:
             return self._fallback_decision(
                 fallback_decision,
                 f"{decision_mode.value} fallback because LLM action was not allowed",
+                fallback_reason="invalid_action",
             )
 
         action = TradeAction(action_text)
@@ -246,6 +266,7 @@ class BaseAgent:
                 limit_price=None,
                 reason=self._llm_reason(payload, decision_mode),
                 signal_strength=self._llm_signal_strength(payload, fallback_decision),
+                decision_source="llm",
             )
 
         max_quantity = self._max_quantity_for_action(action, observation.price)
@@ -255,6 +276,7 @@ class BaseAgent:
             return self._fallback_decision(
                 fallback_decision,
                 f"{decision_mode.value} fallback because LLM quantity was infeasible",
+                fallback_reason="infeasible_quantity",
             )
 
         limit_price = self._clamped_limit_price(
@@ -267,6 +289,7 @@ class BaseAgent:
             return self._fallback_decision(
                 fallback_decision,
                 f"{decision_mode.value} fallback because LLM limit price was invalid",
+                fallback_reason="invalid_limit_price",
             )
 
         return OrderDecision(
@@ -276,6 +299,7 @@ class BaseAgent:
             limit_price=limit_price,
             reason=self._llm_reason(payload, decision_mode),
             signal_strength=self._llm_signal_strength(payload, fallback_decision),
+            decision_source="llm",
         )
 
     def _max_quantity_for_action(self, action: TradeAction, price: float) -> int:
@@ -315,7 +339,7 @@ class BaseAgent:
     def _coerce_positive_int(value: Any, default: int) -> int:
         try:
             return max(0, int(round(float(value))))
-        except (TypeError, ValueError):
+        except (TypeError, ValueError, OverflowError):
             return default
 
     @staticmethod

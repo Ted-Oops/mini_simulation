@@ -5,6 +5,7 @@
 """
 
 import random
+from collections import Counter
 
 from agents import BaseAgent
 from market.agent_factory import create_agents
@@ -33,6 +34,7 @@ class OrderBookMarket:
     def __init__(self, config: ExperimentConfig) -> None:
         """初始化市场、订单簿、agent 和统计容器。"""
 
+        config.validate()
         self.config = config
         self.rng = random.Random(config.seed)
         self.bootstrap_steps = config.bootstrap_steps
@@ -76,6 +78,9 @@ class OrderBookMarket:
         self.avg_wealth_history: list[float] = []
         self.sue_history: list[float] = []
         self.reversal_history: list[float] = []
+        self.llm_success_count_history: list[int] = []
+        self.llm_fallback_count_history: list[int] = []
+        self.llm_fallback_reasons: Counter[str] = Counter()
         self.last_actions_by_agent: dict[str, TradeAction] = {
             agent.agent_id: TradeAction.HOLD for agent in self.agents
         }
@@ -136,6 +141,8 @@ class OrderBookMarket:
         sell_count = 0
         hold_count = 0
         rejected_count = 0
+        llm_success_count = 0
+        llm_fallback_count = 0
         current_actions_by_agent: dict[str, TradeAction] = {
             agent.agent_id: TradeAction.HOLD for agent in self.agents
         }
@@ -185,6 +192,11 @@ class OrderBookMarket:
                 batch_observations,
                 batch_decisions,
             ):
+                if decision.decision_source == "llm":
+                    llm_success_count += 1
+                elif decision.decision_source == "fallback":
+                    llm_fallback_count += 1
+                    self.llm_fallback_reasons[decision.fallback_reason or "unknown"] += 1
                 if decision.action == TradeAction.HOLD:
                     hold_count += 1
                     continue
@@ -265,6 +277,8 @@ class OrderBookMarket:
         self.best_ask_history.append(self.order_book.best_ask())
         self.sue_history.append(step_sue_signal)
         self.reversal_history.append(step_reversal_score)
+        self.llm_success_count_history.append(llm_success_count)
+        self.llm_fallback_count_history.append(llm_fallback_count)
 
         avg_wealth = sum(
             agent.state.cash + agent.state.shares * self.market_state.price
@@ -289,6 +303,7 @@ class OrderBookMarket:
             market_state=self.market_state,
             agents=self.agents,
             order_book=self.order_book,
+            llm_fallback_reasons=dict(self.llm_fallback_reasons),
             histories=MarketHistories(
                 buy_count_history=self.buy_count_history,
                 sell_count_history=self.sell_count_history,
@@ -303,5 +318,7 @@ class OrderBookMarket:
                 avg_wealth_history=self.avg_wealth_history,
                 sue_history=self.sue_history,
                 reversal_history=self.reversal_history,
+                llm_success_count_history=self.llm_success_count_history,
+                llm_fallback_count_history=self.llm_fallback_count_history,
             ),
         )

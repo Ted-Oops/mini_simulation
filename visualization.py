@@ -1,5 +1,6 @@
 import json
 import math
+import tempfile
 from datetime import datetime
 from pathlib import Path
 
@@ -43,9 +44,9 @@ def _grid_position(strategy_type: str, decision_mode: str) -> tuple[int, int]:
 
 def _ensure_output_dir(output_root: str | Path, experiment_label: str) -> Path:
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    output_dir = Path(output_root) / f"{experiment_label}_{timestamp}"
-    output_dir.mkdir(parents=True, exist_ok=True)
-    return output_dir
+    output_root = Path(output_root)
+    output_root.mkdir(parents=True, exist_ok=True)
+    return Path(tempfile.mkdtemp(prefix=f"{experiment_label}_{timestamp}_", dir=output_root))
 
 
 def _build_experiment_label(summary: dict) -> str:
@@ -121,7 +122,7 @@ def save_experiment_report(
 
     summary_path = output_dir / "summary.json"
     with summary_path.open("w", encoding="utf-8") as f:
-        json.dump(summary, f, ensure_ascii=False, indent=2)
+        json.dump(summary, f, ensure_ascii=False, indent=2, allow_nan=False)
 
     strategy_type = summary.get("strategy_type", "unknown")
     decision_mode = summary.get("decision_mode", "unknown")
@@ -150,7 +151,7 @@ def save_experiment_report(
         wealth_pairs.append((agent_info.get("agent_id", "unknown"), wealth))
     wealth_pairs.sort(key=lambda x: x[1], reverse=True)
 
-    plt.style.use("seaborn-v0_8-white-grid")
+    plt.style.use("seaborn-v0_8-whitegrid")
     fig, axes = plt.subplots(2, 2, figsize=(16, 10.5), constrained_layout=True)
     fig.patch.set_facecolor(FIGURE_BG)
 

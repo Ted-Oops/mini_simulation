@@ -20,6 +20,8 @@ class MarketHistories:
     avg_wealth_history: list[float]
     sue_history: list[float]
     reversal_history: list[float]
+    llm_success_count_history: list[int]
+    llm_fallback_count_history: list[int]
 
 
 def serialize_order(order: LimitOrder) -> dict:
@@ -64,12 +66,16 @@ def build_summary(
     agents: list[BaseAgent],
     order_book: OrderBook,
     histories: MarketHistories,
+    llm_fallback_reasons: dict[str, int],
 ) -> dict:
     """导出实验摘要。"""
 
     simulation_price_history = market_state.price_history[bootstrap_steps:]
     simulation_volume_history = market_state.volume_history[bootstrap_steps:]
     simulation_net_demand_history = market_state.net_demand_history[bootstrap_steps:]
+    llm_success_count = sum(histories.llm_success_count_history)
+    llm_fallback_count = sum(histories.llm_fallback_count_history)
+    llm_decision_count = llm_success_count + llm_fallback_count
 
     return {
         "experiment_label": f"{config.strategy_type.value}__{config.decision_mode.value}",
@@ -82,6 +88,15 @@ def build_summary(
         "batch_size": config.batch_size,
         "max_order_age_steps": config.max_order_age_steps,
         "price_tick": config.price_tick,
+        "llm_stats": {
+            "decision_count": llm_decision_count,
+            "success_count": llm_success_count,
+            "fallback_count": llm_fallback_count,
+            "success_rate": llm_success_count / llm_decision_count if llm_decision_count else None,
+            "fallback_reasons": llm_fallback_reasons,
+        },
+        "llm_success_count_history": list(histories.llm_success_count_history),
+        "llm_fallback_count_history": list(histories.llm_fallback_count_history),
         "final_price": market_state.price,
         "final_mark_price": market_state.mark_price,
         "price_history": simulation_price_history,

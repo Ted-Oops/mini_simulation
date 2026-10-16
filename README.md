@@ -1,5 +1,7 @@
 # Mini Simulation
 
+当前版本：`0.3.1`（参数校验、LLM 决策统计与异常回退稳定性补丁）。
+
 `mini_simulation` 是一个轻量级研究子项目，用于快速搭建和迭代多智能体金融市场模拟框架。
 
 当前版本已经从“净需求线性冲击价格”的极简市场，升级为一个更接近真实股票市场的单资产批量限价订单簿。它仍然保持代码体量小、便于快速实验，但撮合层已经具备后续继续扩展到 LLM 决策、异质交易者和多资产场景的基础。
@@ -168,6 +170,13 @@ uv run python main.py --strategy speculator --mode open_ended --steps 20
 - `--agents`：覆盖默认智能体数量
 - `--bootstrap-steps`：正式交易开始前注入的 warm-up 历史长度
 
+参数范围在创建配置和启动市场时统一校验：
+
+- `--agents`、`--steps` 和配置中的 `batch_size` 必须是正整数。
+- `--bootstrap-steps`、初始股数和订单最大存活轮数必须是非负整数；预热长度可为 `0`。
+- 初始价格必须为正数，初始现金与 `price_impact` 必须非负，`price_tick` 至少为 `0.01`，`max_price_offset_ratio` 在 `[0, 1)` 内。
+- 数值参数不接受 `NaN`、无穷大或布尔值。无效命令行参数会在运行前报错。
+
 ### LLM API 配置
 
 `half_rule_based` 和 `open_ended` 会读取 OpenAI-compatible Chat Completions 配置。
@@ -195,6 +204,8 @@ LLM 输出必须是一个 JSON 对象，并且会在本地再次校验：
 ```
 
 如果 API 不可用、返回格式无法解析，或输出动作违反现金、持仓、数量、价格偏离等本地约束，系统会退回本地规则决策。
+
+LLM 配置也会在运行前校验：超时必须为有限正数，`max_tokens` 必须为正整数，温度在 `[0, 2]` 内（允许 `0`），接口地址必须为 HTTP(S) URL。非法配置直接报错；缺少密钥仍按原逻辑回退。模型返回空内容、错误结构或非法数值时安全回退。传输失败后当前客户端会停用后续请求，避免持续等待；重新启动程序会重新创建客户端。并行请求分别保存错误信息。
 
 LLM 模式下，同一个市场 batch 内的 agent 决策会并行请求 API；收齐结果后仍按原始 batch 顺序分配订单 sequence，并统一入簿撮合。因此并行只减少等待时间，不改变市场时间优先原则。
 
@@ -224,6 +235,28 @@ mini_simulation/artifacts/
 ```
 
 该目录已经通过 `.gitignore` 忽略，不进入版本控制。
+
+输出目录在时间戳后添加随机后缀，同一秒启动的同类实验也不会覆盖结果。
+
+终端和 `summary.json` 中新增 `llm_stats`：
+
+- `decision_count`：应由 LLM 模式生成的决策数，等于成功数加回退数；不是 HTTP 请求数。
+- `success_count`：通过本地校验的 LLM 决策数，包括观望；不代表已成交数。
+- `fallback_count`：回退到本地规则的次数，包括缺少密钥或客户端停用后未发出请求的决策。
+- `success_rate`：成功数除以决策数；纯规则实验为 `null`。
+- `fallback_reasons`：按原因分类的回退次数，例如 `missing_api_key`、`transport_error`、`client_disabled`、`response_error`、`invalid_quantity`。
+
+同时输出 `llm_success_count_history` 和 `llm_fallback_count_history`，记录每轮数量。计数发生在撮合前，覆盖观望、已成交和未成交决策，不依赖期末剩余挂单。LLM 模式每轮也会在终端显示成功与回退数量；出现回退时会在摘要中提示。旧实验文件不包含这些统计，不能据此还原完整成功率。
+
+## 稳定性回归检查
+
+在项目目录运行：
+
+```powershell
+uv run python -m unittest discover -s tests -v
+```
+
+检查覆盖九宫格的默认与边界配置、无效参数、LLM 成功／回退计数、异常响应、超时和并发错误隔离，以及 JSON 与图表导出。测试使用模拟 API，不消耗真实模型调用；通过测试不等于真实接口已验证可用。
 
 ## 模拟设计
 

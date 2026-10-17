@@ -1,5 +1,3 @@
-"""为导出图表选择实际包含中文字形的字体。"""
-
 import os
 from functools import lru_cache
 from pathlib import Path

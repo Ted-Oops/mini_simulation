@@ -1,17 +1,16 @@
-"""原文式 (1)–(11) 与表 I；没有分组身份、LLM、外部补单及持仓数量上限。"""
-
 import math
 import random
 from collections import Counter
 from dataclasses import asdict
+
 import numpy as np
 
-from market.order_book import OrderBook
 from market.config import MarketConfig
+from market.order_book import OrderBook
 
 
 def lambert_w_from_log(log_z):
-    """求 W(exp(log_z))，只处理非负实根，避免 exp(log_z) 溢出。"""
+    
     if log_z < -36:
         return math.exp(log_z)
     w = max(0.1, log_z - math.log(log_z)) if log_z > 1 else math.exp(log_z)
@@ -28,7 +27,7 @@ def lambert_w_from_log(log_z):
 
 
 def price_bounds(log_forecast, av, shares, cash):
-    """用式 (10)、(11) 的解析 Lambert W 变换求价界，不改变原始需求。"""
+    
     if shares <= 0:
         return math.exp(log_forecast - av * cash), math.exp(log_forecast), math.exp(log_forecast)
     log_c = math.log(av * shares) + log_forecast
@@ -51,7 +50,7 @@ def simulate(config: MarketConfig):
         wf, wc, wn = [parameters.expovariate(1 / scale) if scale else 0.0 for scale in
                       (config.fundamental_weight, config.chartist_weight, config.noise_weight)]
         weights.append((wf, wc, wn))
-        # normalized 仅用于检查先归一化再设置个体特征的实现差异；原文字面基准为 raw。
+        
         trait_scale = wf + wc + wn if config.trait_weights == "normalized" else 1.0
         ratio = (1 + wf / trait_scale) / (1 + wc / trait_scale)
         horizons.append(math.ceil(config.reference_horizon * ratio))
@@ -104,7 +103,7 @@ def simulate(config: MarketConfig):
         expected = (wf * math.log(fundamental / price) / fundamental_horizon
                     + wc * trend + wn * noises.gauss(0, config.noise_std)) / (wf + wc + wn)
         log_forecast = math.log(price) + expected * horizon
-        # 不截断预测；极端分支显式失败，以免用稳定性补丁改变论文结论。
+        
         if not -700 < log_forecast < 700:
             raise FloatingPointError(f"预测价格超出可计算范围，event={event}, log_forecast={log_forecast}")
         av = risks[agent] * variance

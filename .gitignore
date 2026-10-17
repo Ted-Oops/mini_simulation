@@ -1,32 +1,22 @@
-# IDE settings
 .idea/
 .vscode/
 *.iml
 
-# Python cache and bytecode
 __pycache__/
 *.py[cod]
 *.pyo
 
-# Virtual environments
 .venv/
 venv/
 env/
 ENV/
 
-# Tool caches
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
 
-# Local environment
 .env
 
-# OS files
 .DS_Store
 Thumbs.db
-# Large raw paths and exploratory batches; baseline figures and reports are visible.
-results/**/runs/
-results/**/results.json
-results/**/path_audit.json
-results/sensitivity/
+data/

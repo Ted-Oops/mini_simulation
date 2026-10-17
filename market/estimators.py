@@ -1,6 +1,5 @@
-"""修正极差统计及跨种子自助区间。"""
-
 import math
+
 import numpy as np
 
 

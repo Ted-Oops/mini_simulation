@@ -1,10 +1,12 @@
 import math
 import random
 import unittest
+
 import numpy as np
-from market.order_book import OrderBook
+
 from market.config import MarketConfig
 from market.engine import price_bounds, simulate
+from market.order_book import OrderBook
 from market.statistics import acf, hill
 
 
@@ -76,7 +78,7 @@ class MarketTests(unittest.TestCase):
         self.assertIsNone(hill(np.ones(1000)))
 
     def test_heap_book_matches_independent_sorted_list_ledger(self):
-        # 对照账本直接重算每笔预留，无价格堆或预留缓存，检查优化撮合的实际成交。
+        
         rng = random.Random(27)
         cash, shares = [1000.] * 5, [30.] * 5
         oracle_cash, oracle_shares = cash.copy(), shares.copy()
@@ -122,7 +124,7 @@ class MarketTests(unittest.TestCase):
             lifetime = rng.randrange(1,40)
             if rest > 1e-10:
                 sequence += 1
-                orders[sequence] = dict(owner=owner,side=side,ticks=ticks,quantity=rest,expiry=step+lifetime)
+                orders[sequence] = {'owner': owner,'side': side,'ticks': ticks,'quantity': rest,'expiry': step+lifetime}
             actual_last,actual_volume,actual_rest = book.submit(owner,side,ticks,quantity,step,lifetime)
             self.assertEqual(actual_last,last)
             self.assertAlmostEqual(actual_volume,volume,places=7)

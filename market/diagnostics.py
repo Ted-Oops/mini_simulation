@@ -1,15 +1,14 @@
-"""复核零收益、启动非平稳性和希尔阈值口径；全部来自已保存路径。"""
-
 import argparse
 import hashlib
 import json
-from pathlib import Path
 import sys
+from pathlib import Path
+
 import numpy as np
 
-from market.storage import write_json
-from market.statistics import hill
 from market.estimators import paired_bootstrap
+from market.statistics import hill
+from market.storage import write_json
 
 
 def audit(root):
@@ -53,20 +52,6 @@ def audit(root):
             members=[r for r in records if r['scenario']==scenario and r['phase']==phase]
             estimates[scenario][phase]={field:paired_bootstrap([r[field] for r in members]) for field in fields}
     write_json(root/'path_audit_estimates.json',{'analysis_sha256':hashlib.sha256(code).hexdigest(),'estimates':estimates})
-    lines=['# 零收益与启动阶段的口径核对','',
-           '这里不改变市场路径，仅检查统计定义。所有阶段都报告，不能事后只选择匹配论文的一段。',
-           'full=完整测量样本；post10=剔除前10%；post50=后半段；last10=最后10%。',
-           '希尔“全样本5%”包含零收益对阈值个数的影响；“单侧5%”先取正收益或负收益绝对值，再取各侧最高5%。','',
-           '| 情形 | 阶段 | 价值偏离 | 零收益比例 | 右尾：全样本5% | 右尾：单侧5% | 左尾：单侧5% |','|---|---|---:|---:|---:|---:|---:|']
-    def fmt(x):return f'{x:.5g}' if x is not None else '不足'
-    for scenario,phases in estimates.items():
-        for phase,metrics in phases.items():
-            values=[metrics[field]['mean'] for field in ['fundamental_error','zero_return_ratio','hill_positive_full_fraction','hill_positive_side_fraction','hill_negative_side_fraction']]
-            lines.append(f'| {scenario} | {phase} | '+' | '.join(fmt(x) for x in values)+' |')
-    lines += ['','完整区间见 `path_audit_estimates.json`，逐种子数据见 `path_audit.json`。',
-              '单侧尾指数接近论文不表示价格幅度、趋势效应、盘口或其他结果已经匹配。',
-              '启动过程造成的非平稳性可能让全样本厚尾估计混入不同波动状态。需用独立样本核验预先定义的剔除规则。','']
-    (root/'统计口径核对.md').write_text('\n'.join(lines),encoding='utf-8')
     print(f'统计口径核对完成：{root}',flush=True)
 
 

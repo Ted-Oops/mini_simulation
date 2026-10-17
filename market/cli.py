@@ -1,21 +1,26 @@
-"""异质交易规则限价订单簿：模拟市场并生成论文结果核对图表。"""
-
 import argparse
+import os
+import platform
+import shutil
+import sys
+import time
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from dataclasses import asdict, replace
 from datetime import datetime
-import os
 from pathlib import Path
-import platform
-import sys
-import time
+
 import numpy as np
 
 from market.config import MarketConfig
 from market.engine import simulate
 from market.statistics import evaluate
-from market.storage import snapshot, write_json
-
+from market.storage import (
+    data_directory,
+    export_results,
+    report_directory,
+    source_digest,
+    write_json,
+)
 
 SCENARIOS = {'noise': (0.0, 0.0), 'fundamental': (10.0, 0.0),
              'chart12': (10.0, 1.2), 'chart20': (10.0, 2.0), 'chart28': (10.0, 2.8),
@@ -72,7 +77,8 @@ def run(argv=None):
     parser.add_argument('--warmup', choices=['noise', 'fundamental', 'flat'], default='noise')
     parser.add_argument('--fundamental-clock', choices=['event', 'population'], default='event')
     parser.add_argument('--quantity-mode', choices=['continuous', 'integer'], default='continuous')
-    parser.add_argument('--output', type=Path)
+    parser.add_argument('--output', type=Path, help='图像、配置和最终统计的输出目录')
+    parser.add_argument('--keep-data', action='store_true', help='保留逐事件数据以便重新分析')
     parser.add_argument('--no-report', action='store_true', help='只保存模拟数据，稍后通过 report 命令生成图表')
     args = parser.parse_args(argv)
     try:
@@ -94,10 +100,13 @@ def run(argv=None):
                            fundamental_clock=args.fundamental_clock, quantity_mode=args.quantity_mode)
     except ValueError as exc:
         parser.error(str(exc))
-    root = (args.output or Path('results') / ('run_' + datetime.now().strftime('%Y%m%d_%H%M%S'))).resolve()
+    output = (args.output or Path('results') / ('run_' + datetime.now().strftime('%Y%m%d_%H%M%S'))).resolve()
+    root = data_directory(output)
+    if output.exists() or root.exists():
+        parser.error(f'输出或数据目录已存在，请更换批次名：{output}；{root}')
     root.mkdir(parents=True, exist_ok=False)
     manifest = {'base_config': asdict(base), 'scenarios': {name: SCENARIOS[name] for name in scenarios},
-                'seeds': seeds, 'source_sha256': snapshot(root), 'python': platform.python_version(),
+                'seeds': seeds, 'source_sha256': source_digest(), 'python': platform.python_version(),
                 'numpy': np.__version__, 'created_at': datetime.now().astimezone().isoformat(), 'complete': False}
     write_json(root / 'manifest.json', manifest)
     jobs = []
@@ -120,17 +129,32 @@ def run(argv=None):
     manifest['successful_runs'] = sum(r['status'] == 'success' for r in results)
     manifest['failed_runs'] = sum(r['status'] == 'failed' for r in results)
     write_json(root / 'manifest.json', manifest)
-    print(f'复现目录：{root}', flush=True)
+    print(f'原始数据：{root}', flush=True)
     if not args.no_report and manifest['successful_runs']:
-        report(root)
+        report(root, output)
+        if not args.keep_data and not manifest['failed_runs']:
+            resolved = root.resolve()
+            assert resolved == data_directory(output).resolve() and resolved != resolved.parent
+            shutil.rmtree(resolved)
+            if not any(resolved.parent.iterdir()):
+                resolved.parent.rmdir()
     return 2 if manifest['failed_runs'] else 0
 
 
-def report(root):
-    from market.plotting import generate
+def report(root, output=None):
     from market.diagnostics import audit
-    generate(root)
+    from market.plotting import generate
+    if output is None:
+        if (root / 'manifest.json').is_file():
+            output = report_directory(root)
+        else:
+            output, root = root, data_directory(root)
+    if not (root / 'manifest.json').is_file():
+        raise SystemExit('原始数据未保留，请重新运行模拟；需要以后重新绘图时使用 --keep-data。')
+    generate(root, output)
     audit(root)
+    export_results(root, output)
+    print(f'结果：{output}', flush=True)
 
 
 def main(argv=None):
@@ -138,7 +162,7 @@ def main(argv=None):
         sys.stdout.reconfigure(encoding='utf-8')
     arguments = list(sys.argv[1:] if argv is None else argv)
     if arguments and arguments[0] == 'report':
-        parser = argparse.ArgumentParser(description='从已有实验数据重新生成图表、中文报告和统计核验。')
+        parser = argparse.ArgumentParser(description='从保留的实验数据重新绘图和统计。')
         parser.add_argument('directory', type=Path, nargs='?', default=Path('results/baseline'))
         report(parser.parse_args(arguments[1:]).directory.resolve())
         return 0

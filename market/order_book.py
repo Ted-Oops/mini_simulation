@@ -1,5 +1,3 @@
-"""连续数量、现金库存预留、价格时间优先和逐笔到期的订单簿。"""
-
 import heapq
 from dataclasses import dataclass
 
@@ -65,10 +63,10 @@ class OrderBook:
         first = self.best(side)
         if first is None:
             return None
-        # 堆的第二项不一定是下一价格档；临时弹出整个最优价位再恢复。
+        
         removed = []
         while heap:
-            price, sequence = heap[0]
+            _price, sequence = heap[0]
             if sequence not in self.orders:
                 heapq.heappop(heap)
             elif self.orders[sequence].ticks * self.tick == first:
@@ -81,7 +79,7 @@ class OrderBook:
         return abs(second - first) if second is not None else None
 
     def submit(self, owner, side, ticks, quantity, step, lifetime, integer=False):
-        """返回最后成交价、成交总量、剩余挂单量；主动成交按对手旧单价格。"""
+        
         limit = ticks * self.tick
         quantity = max(0.0, quantity)
         if side == -1:

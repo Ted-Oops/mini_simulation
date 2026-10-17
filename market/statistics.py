@@ -1,10 +1,12 @@
 import math
+
 import numpy as np
+
 from market.estimators import modified_rs
 
 
 def hill(values, fraction=0.05):
-    """原文附录 B：k=完整样本量的 5%，分别应用于左、右、绝对尾。"""
+    
     values = np.asarray(values, dtype=float)
     values = values[np.isfinite(values)]
     k = int(len(values) * fraction)
@@ -40,7 +42,7 @@ def evaluate(data, burn=0):
     absolute_acf = acf(absolute)
     beta = {}
     for window in (100, 200, 400, 600, 800):
-        # 各非重叠窗口分别估计，再平均；口径显式保存，不把整条序列当作长度 n。
+        
         values = [modified_rs(absolute[start:start + window], q=20)
                   for start in range(0, len(absolute) - window + 1, window)]
         beta[str(window)] = mean_finite([x for x in values if x is not None])

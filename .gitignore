@@ -19,11 +19,14 @@ ENV/
 .mypy_cache/
 .ruff_cache/
 
-# Local secrets
+# Local environment
 .env
-local_api_config.py
 
 # OS files
 .DS_Store
 Thumbs.db
-artifacts/
+# Large raw paths and exploratory batches; baseline figures and reports are visible.
+results/**/runs/
+results/**/results.json
+results/**/path_audit.json
+results/sensitivity/

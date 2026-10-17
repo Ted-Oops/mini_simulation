@@ -1,287 +1,139 @@
-"""订单簿实现。
+"""连续数量、现金库存预留、价格时间优先和逐笔到期的订单簿。"""
 
-这个文件只关心“订单如何进入簿中、如何排序、如何撮合、如何移除”，
-不关心 agent 如何思考，也不关心每轮实验如何推进。
-"""
+import heapq
+from dataclasses import dataclass
 
-from models import LimitOrder, TradeAction, TradeExecution
+
+@dataclass(slots=True)
+class Order:
+    owner: int
+    side: int
+    ticks: int
+    quantity: float
+    expiry: int
 
 
 class OrderBook:
-    """单资产限价订单簿。
+    def __init__(self, cash, shares, tick):
+        self.cash, self.shares, self.tick = cash, shares, tick
+        self.reserved_cash = [0.0] * len(cash)
+        self.reserved_shares = [0.0] * len(cash)
+        self.orders = {}
+        self.owner_orders = [set() for _ in cash]
+        self.bids, self.asks, self.expiries = [], [], []
+        self.sequence = 0
+        self.self_cancellations = 0
+        self.budget_bindings = 0
 
-    这个类是一个纯撮合组件，负责维护：
+    def available_cash(self, owner):
+        return max(0.0, self.cash[owner] - self.reserved_cash[owner])
 
-    - 买单队列
-    - 卖单队列
-    - agent 当前仍在簿中的挂单索引
-    - 已发生的成交记录
+    def available_shares(self, owner):
+        return max(0.0, self.shares[owner] - self.reserved_shares[owner])
 
-    它遵循两个最核心的市场规则：
-
-    - 价格优先：更优价格先成交
-    - 时间优先：同价订单按更早进入系统的先后成交
-    """
-
-    def __init__(self, initial_price: float, price_tick: float) -> None:
-        """初始化订单簿状态。
-
-        参数：
-        - `initial_price`：市场初始参考价，用于无成交时的价格锚。
-        - `price_tick`：最小价格变动单位，用于报价离散化。
-        """
-
-        self.last_trade_price = initial_price
-        self.price_tick = max(price_tick, 0.01)
-        self.buy_orders: list[LimitOrder] = []
-        self.sell_orders: list[LimitOrder] = []
-        self.agent_orders: dict[str, LimitOrder] = {}
-        self.trades: list[TradeExecution] = []
-
-    @staticmethod
-    def _buy_priority(order: LimitOrder) -> tuple[float, int, int, int]:
-        """返回买单的排序键。
-
-        逻辑是：
-        - 买价越高越优先
-        - 若价格相同，则更早提交的订单优先
-        """
-
-        return (
-            -order.limit_price,
-            order.submitted_step,
-            order.submitted_batch,
-            order.sequence,
-        )
-
-    @staticmethod
-    def _sell_priority(order: LimitOrder) -> tuple[float, int, int, int]:
-        """返回卖单的排序键。
-
-        逻辑是：
-        - 卖价越低越优先
-        - 若价格相同，则更早提交的订单优先
-        """
-
-        return (
-            order.limit_price,
-            order.submitted_step,
-            order.submitted_batch,
-            order.sequence,
-        )
-
-    @staticmethod
-    def _time_priority(order: LimitOrder) -> tuple[int, int, int]:
-        """提取订单的时间优先键。
-
-        这里不使用真实时钟，而是使用：
-        - 第几轮
-        - 第几个 batch
-        - 全局顺序号 sequence
-
-        这样可以保证仿真中时间优先规则稳定且可复现。
-        """
-
-        return order.submitted_step, order.submitted_batch, order.sequence
-
-    def _sort_books(self) -> None:
-        """对买卖盘重新排序。"""
-
-        self.buy_orders.sort(key=self._buy_priority)
-        self.sell_orders.sort(key=self._sell_priority)
-
-    def add_order(self, order: LimitOrder) -> None:
-        """把一笔新订单加入订单簿。
-
-        加入后会同步更新：
-        - agent 到挂单的索引
-        - 买卖盘队列顺序
-        """
-
-        self.agent_orders[order.agent_id] = order
-        if order.action == TradeAction.BUY:
-            self.buy_orders.append(order)
+    def _release(self, order, quantity):
+        if order.side == 1:
+            self.reserved_cash[order.owner] = max(0.0, self.reserved_cash[order.owner] - quantity * order.ticks * self.tick)
         else:
-            self.sell_orders.append(order)
-        self._sort_books()
+            self.reserved_shares[order.owner] = max(0.0, self.reserved_shares[order.owner] - quantity)
 
-    def cancel_agent_order(self, agent_id: str) -> LimitOrder | None:
-        """撤销指定 agent 当前仍在簿中的挂单。
+    def cancel(self, sequence):
+        order = self.orders.pop(sequence, None)
+        if order is not None:
+            self._release(order, order.quantity)
+            self.owner_orders[order.owner].discard(sequence)
 
-        一个 agent 在当前实现里默认只保留一笔活动挂单。
-        如果该 agent 没有未成交订单，则返回 `None`。
-        """
+    def cancel_owner(self, owner):
+        for sequence in tuple(self.owner_orders[owner]):
+            self.cancel(sequence)
 
-        existing_order = self.agent_orders.pop(agent_id, None)
-        if existing_order is None:
+    def expire(self, step):
+        while self.expiries and self.expiries[0][0] <= step:
+            _, sequence = heapq.heappop(self.expiries)
+            self.cancel(sequence)
+
+    def best(self, side):
+        heap = self.bids if side == 1 else self.asks
+        while heap and heap[0][1] not in self.orders:
+            heapq.heappop(heap)
+        if not heap:
             return None
+        return self.orders[heap[0][1]].ticks * self.tick
 
-        if existing_order.action == TradeAction.BUY:
-            self.buy_orders = [
-                order
-                for order in self.buy_orders
-                if order.order_id != existing_order.order_id
-            ]
-        else:
-            self.sell_orders = [
-                order
-                for order in self.sell_orders
-                if order.order_id != existing_order.order_id
-            ]
-        return existing_order
-
-    def clear_expired_orders(self, current_step: int, max_age_steps: int) -> int:
-        """清理超过最大存活期的旧挂单。
-
-        参数：
-        - `current_step`：当前要进入的正式轮次
-        - `max_age_steps`：挂单最多允许跨多少轮保留
-
-        返回值：
-        - 本次被清理掉的订单数量
-        """
-
-        if max_age_steps <= 0:
-            expired_orders = len(self.buy_orders) + len(self.sell_orders)
-            self.buy_orders = []
-            self.sell_orders = []
-            self.agent_orders.clear()
-            return expired_orders
-
-        expired_count = 0
-
-        remaining_buy_orders: list[LimitOrder] = []
-        for order in self.buy_orders:
-            if current_step - order.submitted_step >= max_age_steps:
-                self.agent_orders.pop(order.agent_id, None)
-                expired_count += 1
+    def gap(self, side):
+        heap = self.bids if side == 1 else self.asks
+        first = self.best(side)
+        if first is None:
+            return None
+        # 堆的第二项不一定是下一价格档；临时弹出整个最优价位再恢复。
+        removed = []
+        while heap:
+            price, sequence = heap[0]
+            if sequence not in self.orders:
+                heapq.heappop(heap)
+            elif self.orders[sequence].ticks * self.tick == first:
+                removed.append(heapq.heappop(heap))
             else:
-                remaining_buy_orders.append(order)
-
-        remaining_sell_orders: list[LimitOrder] = []
-        for order in self.sell_orders:
-            if current_step - order.submitted_step >= max_age_steps:
-                self.agent_orders.pop(order.agent_id, None)
-                expired_count += 1
-            else:
-                remaining_sell_orders.append(order)
-
-        self.buy_orders = remaining_buy_orders
-        self.sell_orders = remaining_sell_orders
-        self._sort_books()
-        return expired_count
-
-    def best_bid(self) -> float | None:
-        """返回当前最优买价。"""
-
-        if not self.buy_orders:
-            return None
-        return self.buy_orders[0].limit_price
-
-    def best_ask(self) -> float | None:
-        """返回当前最优卖价。"""
-
-        if not self.sell_orders:
-            return None
-        return self.sell_orders[0].limit_price
-
-    def order_count(self) -> int:
-        """返回当前订单簿中的活动挂单总数。"""
-
-        return len(self.buy_orders) + len(self.sell_orders)
-
-    def mark_price(self) -> float:
-        """返回当前订单簿的 quote-based 估值价。
-
-        逻辑分三种情况：
-        - 两边盘口都存在：取最优买卖价中点
-        - 只有单边盘口：用最近成交价和该单边报价做保守加权
-        - 完全无挂单：退回最近成交价
-        """
-
-        best_bid = self.best_bid()
-        best_ask = self.best_ask()
-
-        if best_bid is not None and best_ask is not None:
-            return self._align_mark_price((best_bid + best_ask) / 2)
-        if best_bid is not None:
-            return self._align_mark_price((2 * self.last_trade_price + best_bid) / 3)
-        if best_ask is not None:
-            return self._align_mark_price((2 * self.last_trade_price + best_ask) / 3)
-        return self.last_trade_price
-
-    def _align_mark_price(self, raw_price: float) -> float:
-        """把价格吸附到 tick 网格上。"""
-
-        tick_count = round(raw_price / self.price_tick)
-        return max(tick_count * self.price_tick, self.price_tick)
-
-    def _execution_price(
-        self, buy_order: LimitOrder, sell_order: LimitOrder
-    ) -> float:
-        """决定一笔撮合的成交价格。
-
-        当前采用的规则是：
-        谁更早进入簿中，就沿用谁的报价作为成交价。
-
-        这相当于把更早在簿中的订单视为被动单，
-        而后来的订单视为主动吃单的一方。
-        """
-
-        if self._time_priority(buy_order) <= self._time_priority(sell_order):
-            return buy_order.limit_price
-        return sell_order.limit_price
-
-    def match_orders(self, step: int, batch: int) -> list[TradeExecution]:
-        """执行一次连续撮合。
-
-        只要最优买价大于等于最优卖价，就持续成交，直到盘口不再交叉。
-        每次成交都会：
-        - 生成一条 `TradeExecution`
-        - 减少双方剩余数量
-        - 在订单数量归零时将其移出订单簿
-        """
-
-        self._sort_books()
-        new_trades: list[TradeExecution] = []
-        trade_sequence = 0
-
-        while self.buy_orders and self.sell_orders:
-            buy_order = self.buy_orders[0]
-            sell_order = self.sell_orders[0]
-
-            if buy_order.limit_price < sell_order.limit_price:
                 break
+        second = self.best(side)
+        for item in removed:
+            heapq.heappush(heap, item)
+        return abs(second - first) if second is not None else None
 
-            trade_quantity = min(buy_order.quantity, sell_order.quantity)
-            execution_price = self._execution_price(buy_order, sell_order)
-
-            trade = TradeExecution(
-                trade_id=f"trade_{step}_{batch}_{trade_sequence}",
-                buy_order_id=buy_order.order_id,
-                sell_order_id=sell_order.order_id,
-                price=execution_price,
-                quantity=trade_quantity,
-                step=step,
-                batch=batch,
-                sequence=trade_sequence,
-                buyer_id=buy_order.agent_id,
-                seller_id=sell_order.agent_id,
-            )
-            self.trades.append(trade)
-            new_trades.append(trade)
-            self.last_trade_price = execution_price
-
-            buy_order.quantity -= trade_quantity
-            sell_order.quantity -= trade_quantity
-            trade_sequence += 1
-
-            if buy_order.quantity == 0:
-                self.buy_orders.pop(0)
-                self.agent_orders.pop(buy_order.agent_id, None)
-
-            if sell_order.quantity == 0:
-                self.sell_orders.pop(0)
-                self.agent_orders.pop(sell_order.agent_id, None)
-
-        return new_trades
+    def submit(self, owner, side, ticks, quantity, step, lifetime, integer=False):
+        """返回最后成交价、成交总量、剩余挂单量；主动成交按对手旧单价格。"""
+        limit = ticks * self.tick
+        quantity = max(0.0, quantity)
+        if side == -1:
+            quantity = min(quantity, self.available_shares(owner))
+        if integer:
+            quantity = float(int(quantity))
+        remaining, volume, last_price = quantity, 0.0, None
+        opposite = self.asks if side == 1 else self.bids
+        while remaining > 1e-10:
+            best = self.best(-side)
+            if best is None or (side == 1 and best > limit) or (side == -1 and best < limit):
+                break
+            sequence = opposite[0][1]
+            resting = self.orders[sequence]
+            if resting.owner == owner:
+                self.cancel(sequence)
+                self.self_cancellations += 1
+                continue
+            feasible = self.available_cash(owner) / best if side == 1 else self.available_shares(owner)
+            amount = min(remaining, resting.quantity, feasible)
+            if integer:
+                amount = float(int(amount + 1e-10))
+            if amount <= 1e-10:
+                self.budget_bindings += 1
+                break
+            buyer, seller = (owner, resting.owner) if side == 1 else (resting.owner, owner)
+            self._release(resting, amount)
+            self.cash[buyer] -= amount * best
+            self.cash[seller] += amount * best
+            self.shares[buyer] += amount
+            self.shares[seller] -= amount
+            remaining -= amount
+            resting.quantity -= amount
+            volume += amount
+            last_price = best
+            if resting.quantity <= 1e-10:
+                self.cancel(sequence)
+        feasible = self.available_cash(owner) / limit if side == 1 else self.available_shares(owner)
+        rest = min(remaining, feasible)
+        if rest + 1e-10 < remaining:
+            self.budget_bindings += 1
+        if integer:
+            rest = float(int(rest + 1e-10))
+        if rest > 1e-10:
+            self.sequence += 1
+            sequence = self.sequence
+            self.orders[sequence] = Order(owner, side, ticks, rest, step + lifetime)
+            self.owner_orders[owner].add(sequence)
+            heapq.heappush(self.bids if side == 1 else self.asks, (-ticks if side == 1 else ticks, sequence))
+            heapq.heappush(self.expiries, (step + lifetime, sequence))
+            if side == 1:
+                self.reserved_cash[owner] += rest * limit
+            else:
+                self.reserved_shares[owner] += rest
+        return last_price, volume, rest

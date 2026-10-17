@@ -1,0 +1,1015 @@
+{
+  "analysis_sha256": "42cad6b52a124f683b1c91f7ac153c048f7f221d8babb7bb24bfdbda1fd63eef",
+  "estimates": {
+    "chart12": {
+      "full": {
+        "fundamental_error": {
+          "n": 100,
+          "mean": 0.1486321407093577,
+          "ci_low": 0.14392783294702657,
+          "ci_high": 0.1536586709563141
+        },
+        "return_volatility": {
+          "n": 100,
+          "mean": 0.01642386827690559,
+          "ci_low": 0.01614679783707773,
+          "ci_high": 0.016739248234011697
+        },
+        "zero_return_ratio": {
+          "n": 100,
+          "mean": 0.6977606000000001,
+          "ci_low": 0.6928922862499998,
+          "ci_high": 0.7027261387500003
+        },
+        "hill_positive_full_fraction": {
+          "n": 100,
+          "mean": 1.4021397089458136,
+          "ci_low": 1.3933101949342526,
+          "ci_high": 1.411068004289238
+        },
+        "hill_negative_full_fraction": {
+          "n": 100,
+          "mean": 1.4375229021432794,
+          "ci_low": 1.4267097860812155,
+          "ci_high": 1.4483054631062124
+        },
+        "hill_positive_side_fraction": {
+          "n": 100,
+          "mean": 2.4969248234826344,
+          "ci_low": 2.4663312735721004,
+          "ci_high": 2.527220883079014
+        },
+        "hill_negative_side_fraction": {
+          "n": 100,
+          "mean": 2.6312276186783685,
+          "ci_low": 2.599939494230166,
+          "ci_high": 2.663401143078066
+        },
+        "hill_absolute_nonzero_fraction": {
+          "n": 100,
+          "mean": 2.5606075799813808,
+          "ci_low": 2.529804618322056,
+          "ci_high": 2.5917893793890725
+        }
+      },
+      "post10": {
+        "fundamental_error": {
+          "n": 100,
+          "mean": 0.12080992238151014,
+          "ci_low": 0.11596819886673744,
+          "ci_high": 0.1261840925590614
+        },
+        "return_volatility": {
+          "n": 100,
+          "mean": 0.013069310043123634,
+          "ci_low": 0.012810810960827888,
+          "ci_high": 0.013328697316815448
+        },
+        "zero_return_ratio": {
+          "n": 100,
+          "mean": 0.688071388888889,
+          "ci_low": 0.6827157805555553,
+          "ci_high": 0.6935146138888888
+        },
+        "hill_positive_full_fraction": {
+          "n": 100,
+          "mean": 1.5125854100889122,
+          "ci_low": 1.5021562980795822,
+          "ci_high": 1.5237733993099967
+        },
+        "hill_negative_full_fraction": {
+          "n": 100,
+          "mean": 1.5492221191749191,
+          "ci_low": 1.5377555016142745,
+          "ci_high": 1.5607310838895507
+        },
+        "hill_positive_side_fraction": {
+          "n": 100,
+          "mean": 2.973173575640008,
+          "ci_low": 2.9436840774455413,
+          "ci_high": 3.003623950417401
+        },
+        "hill_negative_side_fraction": {
+          "n": 100,
+          "mean": 3.121014238214427,
+          "ci_low": 3.0899154700464506,
+          "ci_high": 3.15295211265932
+        },
+        "hill_absolute_nonzero_fraction": {
+          "n": 100,
+          "mean": 3.044747509270522,
+          "ci_low": 3.0158740216763045,
+          "ci_high": 3.0746487121871735
+        }
+      },
+      "post50": {
+        "fundamental_error": {
+          "n": 100,
+          "mean": 0.11273452261456111,
+          "ci_low": 0.10626260523678634,
+          "ci_high": 0.119806337534369
+        },
+        "return_volatility": {
+          "n": 100,
+          "mean": 0.012652286434893825,
+          "ci_low": 0.012244210503400146,
+          "ci_high": 0.013075829775621382
+        },
+        "zero_return_ratio": {
+          "n": 100,
+          "mean": 0.6822854,
+          "ci_low": 0.6759902550000001,
+          "ci_high": 0.6886869200000001
+        },
+        "hill_positive_full_fraction": {
+          "n": 100,
+          "mean": 1.5326708811616045,
+          "ci_low": 1.5176177399412232,
+          "ci_high": 1.5486935799114998
+        },
+        "hill_negative_full_fraction": {
+          "n": 100,
+          "mean": 1.5689077279079953,
+          "ci_low": 1.5523832280437728,
+          "ci_high": 1.5865275657668327
+        },
+        "hill_positive_side_fraction": {
+          "n": 100,
+          "mean": 3.00998431213159,
+          "ci_low": 2.9734810288026634,
+          "ci_high": 3.0469149149800283
+        },
+        "hill_negative_side_fraction": {
+          "n": 100,
+          "mean": 3.1435633214659244,
+          "ci_low": 3.10131164418338,
+          "ci_high": 3.1865781127997597
+        },
+        "hill_absolute_nonzero_fraction": {
+          "n": 100,
+          "mean": 3.0734890195374422,
+          "ci_low": 3.0369293099560872,
+          "ci_high": 3.1112978420153548
+        }
+      },
+      "last10": {
+        "fundamental_error": {
+          "n": 100,
+          "mean": 0.10684097175787036,
+          "ci_low": 0.09822470544311185,
+          "ci_high": 0.11526115108538074
+        },
+        "return_volatility": {
+          "n": 100,
+          "mean": 0.012223231765872698,
+          "ci_low": 0.011675584656853701,
+          "ci_high": 0.012765658583132163
+        },
+        "zero_return_ratio": {
+          "n": 100,
+          "mean": 0.6755004999999998,
+          "ci_low": 0.6669378374999997,
+          "ci_high": 0.6837267875
+        },
+        "hill_positive_full_fraction": {
+          "n": 100,
+          "mean": 1.557261289160119,
+          "ci_low": 1.5304572756796473,
+          "ci_high": 1.5841386808217508
+        },
+        "hill_negative_full_fraction": {
+          "n": 100,
+          "mean": 1.600117941885477,
+          "ci_low": 1.569163950700857,
+          "ci_high": 1.631475312730933
+        },
+        "hill_positive_side_fraction": {
+          "n": 100,
+          "mean": 3.0744747593226887,
+          "ci_low": 3.0025896561409273,
+          "ci_high": 3.1444439701198346
+        },
+        "hill_negative_side_fraction": {
+          "n": 100,
+          "mean": 3.238217279972349,
+          "ci_low": 3.1587530099854417,
+          "ci_high": 3.319467157211548
+        },
+        "hill_absolute_nonzero_fraction": {
+          "n": 100,
+          "mean": 3.1455201143764997,
+          "ci_low": 3.076444230820069,
+          "ci_high": 3.2127250047016784
+        }
+      }
+    },
+    "chart20": {
+      "full": {
+        "fundamental_error": {
+          "n": 100,
+          "mean": 0.17978312751754552,
+          "ci_low": 0.17110960288688026,
+          "ci_high": 0.18879758415618228
+        },
+        "return_volatility": {
+          "n": 100,
+          "mean": 0.01818705081551787,
+          "ci_low": 0.017854877815371813,
+          "ci_high": 0.01855934767016478
+        },
+        "zero_return_ratio": {
+          "n": 100,
+          "mean": 0.6650802000000001,
+          "ci_low": 0.65881436375,
+          "ci_high": 0.6713244825000001
+        },
+        "hill_positive_full_fraction": {
+          "n": 100,
+          "mean": 1.4408810747004455,
+          "ci_low": 1.430609241161674,
+          "ci_high": 1.4513277373793758
+        },
+        "hill_negative_full_fraction": {
+          "n": 100,
+          "mean": 1.465372875479187,
+          "ci_low": 1.455419208929072,
+          "ci_high": 1.4757536483329614
+        },
+        "hill_positive_side_fraction": {
+          "n": 100,
+          "mean": 2.5443248925082442,
+          "ci_low": 2.5166918378391134,
+          "ci_high": 2.571831676845821
+        },
+        "hill_negative_side_fraction": {
+          "n": 100,
+          "mean": 2.681890913931737,
+          "ci_low": 2.6516703744695542,
+          "ci_high": 2.711543377953817
+        },
+        "hill_absolute_nonzero_fraction": {
+          "n": 100,
+          "mean": 2.6105261358818637,
+          "ci_low": 2.582529252460612,
+          "ci_high": 2.63812373944476
+        }
+      },
+      "post10": {
+        "fundamental_error": {
+          "n": 100,
+          "mean": 0.15521540869904388,
+          "ci_low": 0.14603456227618233,
+          "ci_high": 0.16491170072011369
+        },
+        "return_volatility": {
+          "n": 100,
+          "mean": 0.015327734819162388,
+          "ci_low": 0.015014890327101472,
+          "ci_high": 0.015650471601960116
+        },
+        "zero_return_ratio": {
+          "n": 100,
+          "mean": 0.6565865555555556,
+          "ci_low": 0.6498346013888888,
+          "ci_high": 0.6633618208333332
+        },
+        "hill_positive_full_fraction": {
+          "n": 100,
+          "mean": 1.51140369289119,
+          "ci_low": 1.4978828673013922,
+          "ci_high": 1.524771354551962
+        },
+        "hill_negative_full_fraction": {
+          "n": 100,
+          "mean": 1.5324460441890682,
+          "ci_low": 1.5201083489033778,
+          "ci_high": 1.5446422102662858
+        },
+        "hill_positive_side_fraction": {
+          "n": 100,
+          "mean": 2.7977573331962025,
+          "ci_low": 2.7583302779359045,
+          "ci_high": 2.834751039530236
+        },
+        "hill_negative_side_fraction": {
+          "n": 100,
+          "mean": 2.9307176566244153,
+          "ci_low": 2.8938429843814912,
+          "ci_high": 2.9657313481422283
+        },
+        "hill_absolute_nonzero_fraction": {
+          "n": 100,
+          "mean": 2.860360672559176,
+          "ci_low": 2.8238610978791865,
+          "ci_high": 2.895573166836791
+        }
+      },
+      "post50": {
+        "fundamental_error": {
+          "n": 100,
+          "mean": 0.14500871192667808,
+          "ci_low": 0.13382395202363256,
+          "ci_high": 0.15730884829342218
+        },
+        "return_volatility": {
+          "n": 100,
+          "mean": 0.014745087238323936,
+          "ci_low": 0.014306818577044085,
+          "ci_high": 0.015213932194984101
+        },
+        "zero_return_ratio": {
+          "n": 100,
+          "mean": 0.6501461,
+          "ci_low": 0.642296105,
+          "ci_high": 0.6582859775000001
+        },
+        "hill_positive_full_fraction": {
+          "n": 100,
+          "mean": 1.5219894117226551,
+          "ci_low": 1.5031377001498394,
+          "ci_high": 1.5407727624494374
+        },
+        "hill_negative_full_fraction": {
+          "n": 100,
+          "mean": 1.5423647429619942,
+          "ci_low": 1.5245301712981862,
+          "ci_high": 1.560311947301491
+        },
+        "hill_positive_side_fraction": {
+          "n": 100,
+          "mean": 2.8210427359070507,
+          "ci_low": 2.7682628470082955,
+          "ci_high": 2.872139941941661
+        },
+        "hill_negative_side_fraction": {
+          "n": 100,
+          "mean": 2.9389936943462764,
+          "ci_low": 2.8892215432758857,
+          "ci_high": 2.9889080768384004
+        },
+        "hill_absolute_nonzero_fraction": {
+          "n": 100,
+          "mean": 2.8757127340946056,
+          "ci_low": 2.825420439404113,
+          "ci_high": 2.9242140542803106
+        }
+      },
+      "last10": {
+        "fundamental_error": {
+          "n": 100,
+          "mean": 0.14336709321519955,
+          "ci_low": 0.12899372783413082,
+          "ci_high": 0.15874286132708507
+        },
+        "return_volatility": {
+          "n": 100,
+          "mean": 0.014569765463779513,
+          "ci_low": 0.013874964320556429,
+          "ci_high": 0.015307993409920007
+        },
+        "zero_return_ratio": {
+          "n": 100,
+          "mean": 0.6470125,
+          "ci_low": 0.6372376750000001,
+          "ci_high": 0.6567453000000001
+        },
+        "hill_positive_full_fraction": {
+          "n": 100,
+          "mean": 1.5609886344494026,
+          "ci_low": 1.5309241966432616,
+          "ci_high": 1.5926356280799794
+        },
+        "hill_negative_full_fraction": {
+          "n": 100,
+          "mean": 1.5822569129268513,
+          "ci_low": 1.552314240072787,
+          "ci_high": 1.6136907510698164
+        },
+        "hill_positive_side_fraction": {
+          "n": 100,
+          "mean": 2.9348545537294206,
+          "ci_low": 2.8587177119527416,
+          "ci_high": 3.0119870330776486
+        },
+        "hill_negative_side_fraction": {
+          "n": 100,
+          "mean": 3.1136183142787304,
+          "ci_low": 3.0332780126103236,
+          "ci_high": 3.197662395290904
+        },
+        "hill_absolute_nonzero_fraction": {
+          "n": 100,
+          "mean": 3.0131524636329527,
+          "ci_low": 2.9423071123502607,
+          "ci_high": 3.085533287681987
+        }
+      }
+    },
+    "chart28": {
+      "full": {
+        "fundamental_error": {
+          "n": 100,
+          "mean": 0.2229126711838191,
+          "ci_low": 0.20938010797400694,
+          "ci_high": 0.23666318943467318
+        },
+        "return_volatility": {
+          "n": 100,
+          "mean": 0.02053835416218317,
+          "ci_low": 0.02012058846379523,
+          "ci_high": 0.02095557875274149
+        },
+        "zero_return_ratio": {
+          "n": 100,
+          "mean": 0.6495287500000001,
+          "ci_low": 0.6421942900000001,
+          "ci_high": 0.6566512725
+        },
+        "hill_positive_full_fraction": {
+          "n": 100,
+          "mean": 1.4993310920006149,
+          "ci_low": 1.4850583921976974,
+          "ci_high": 1.5138647152710696
+        },
+        "hill_negative_full_fraction": {
+          "n": 100,
+          "mean": 1.5147132691761453,
+          "ci_low": 1.5016893764891022,
+          "ci_high": 1.5283682051860725
+        },
+        "hill_positive_side_fraction": {
+          "n": 100,
+          "mean": 2.624380137015553,
+          "ci_low": 2.5881463514511855,
+          "ci_high": 2.6601093055235445
+        },
+        "hill_negative_side_fraction": {
+          "n": 100,
+          "mean": 2.758007957680205,
+          "ci_low": 2.723935604014243,
+          "ci_high": 2.7920229980483042
+        },
+        "hill_absolute_nonzero_fraction": {
+          "n": 100,
+          "mean": 2.689339024134081,
+          "ci_low": 2.654997585933813,
+          "ci_high": 2.7237013342085388
+        }
+      },
+      "post10": {
+        "fundamental_error": {
+          "n": 100,
+          "mean": 0.20045308759609,
+          "ci_low": 0.1858595395819092,
+          "ci_high": 0.21549057694794352
+        },
+        "return_volatility": {
+          "n": 100,
+          "mean": 0.01805224501386006,
+          "ci_low": 0.017571234681872456,
+          "ci_high": 0.01855288421957213
+        },
+        "zero_return_ratio": {
+          "n": 100,
+          "mean": 0.6422206666666668,
+          "ci_low": 0.6342187430555554,
+          "ci_high": 0.6501261305555555
+        },
+        "hill_positive_full_fraction": {
+          "n": 100,
+          "mean": 1.5466219190494195,
+          "ci_low": 1.5293769627584473,
+          "ci_high": 1.563671933346622
+        },
+        "hill_negative_full_fraction": {
+          "n": 100,
+          "mean": 1.5573395960394163,
+          "ci_low": 1.5421523955440735,
+          "ci_high": 1.5731538800481422
+        },
+        "hill_positive_side_fraction": {
+          "n": 100,
+          "mean": 2.7987014364320197,
+          "ci_low": 2.7524126317594493,
+          "ci_high": 2.8430134919872314
+        },
+        "hill_negative_side_fraction": {
+          "n": 100,
+          "mean": 2.912789790294848,
+          "ci_low": 2.8724922483987,
+          "ci_high": 2.95270995337941
+        },
+        "hill_absolute_nonzero_fraction": {
+          "n": 100,
+          "mean": 2.8539627622735493,
+          "ci_low": 2.811778422448889,
+          "ci_high": 2.8955517180982935
+        }
+      },
+      "post50": {
+        "fundamental_error": {
+          "n": 100,
+          "mean": 0.18852515891451957,
+          "ci_low": 0.17092448253453466,
+          "ci_high": 0.20726290003071415
+        },
+        "return_volatility": {
+          "n": 100,
+          "mean": 0.017425678902890353,
+          "ci_low": 0.016772442912017804,
+          "ci_high": 0.018100962243024214
+        },
+        "zero_return_ratio": {
+          "n": 100,
+          "mean": 0.6345761,
+          "ci_low": 0.6255035975,
+          "ci_high": 0.6438780775
+        },
+        "hill_positive_full_fraction": {
+          "n": 100,
+          "mean": 1.544141726514736,
+          "ci_low": 1.5219874078668805,
+          "ci_high": 1.5664832546634475
+        },
+        "hill_negative_full_fraction": {
+          "n": 100,
+          "mean": 1.5512091793700822,
+          "ci_low": 1.5308936497423857,
+          "ci_high": 1.572709373814602
+        },
+        "hill_positive_side_fraction": {
+          "n": 100,
+          "mean": 2.7862077155932665,
+          "ci_low": 2.734817609606775,
+          "ci_high": 2.8379206215298884
+        },
+        "hill_negative_side_fraction": {
+          "n": 100,
+          "mean": 2.8828254789054797,
+          "ci_low": 2.8376943896952604,
+          "ci_high": 2.931381850822558
+        },
+        "hill_absolute_nonzero_fraction": {
+          "n": 100,
+          "mean": 2.8334169959191913,
+          "ci_low": 2.7868629932189735,
+          "ci_high": 2.8821326135042042
+        }
+      },
+      "last10": {
+        "fundamental_error": {
+          "n": 100,
+          "mean": 0.17918729432362643,
+          "ci_low": 0.15650873846263286,
+          "ci_high": 0.20355129883610815
+        },
+        "return_volatility": {
+          "n": 100,
+          "mean": 0.016301304425715635,
+          "ci_low": 0.015302184383703002,
+          "ci_high": 0.01738563232494944
+        },
+        "zero_return_ratio": {
+          "n": 100,
+          "mean": 0.6275755,
+          "ci_low": 0.6154565874999999,
+          "ci_high": 0.6395667749999999
+        },
+        "hill_positive_full_fraction": {
+          "n": 100,
+          "mean": 1.6285661630378183,
+          "ci_low": 1.5943942328098188,
+          "ci_high": 1.6608422604284907
+        },
+        "hill_negative_full_fraction": {
+          "n": 100,
+          "mean": 1.638812255027062,
+          "ci_low": 1.6044177208374335,
+          "ci_high": 1.6732740811540454
+        },
+        "hill_positive_side_fraction": {
+          "n": 100,
+          "mean": 2.931001880390249,
+          "ci_low": 2.8558664800693165,
+          "ci_high": 3.005016190339766
+        },
+        "hill_negative_side_fraction": {
+          "n": 100,
+          "mean": 3.034374905687132,
+          "ci_low": 2.9651622461051805,
+          "ci_high": 3.104476177787571
+        },
+        "hill_absolute_nonzero_fraction": {
+          "n": 100,
+          "mean": 2.9791746168959885,
+          "ci_low": 2.9104002327039153,
+          "ci_high": 3.0472656952281616
+        }
+      }
+    },
+    "fundamental": {
+      "full": {
+        "fundamental_error": {
+          "n": 100,
+          "mean": 0.18530771301827495,
+          "ci_low": 0.1653782637072102,
+          "ci_high": 0.22229357169866826
+        },
+        "return_volatility": {
+          "n": 100,
+          "mean": 0.01870078966774174,
+          "ci_low": 0.018059815854556186,
+          "ci_high": 0.019564075880464275
+        },
+        "zero_return_ratio": {
+          "n": 100,
+          "mean": 0.8386196499999999,
+          "ci_low": 0.8353656075,
+          "ci_high": 0.8417159337499999
+        },
+        "hill_positive_full_fraction": {
+          "n": 100,
+          "mean": 1.070798127081202,
+          "ci_low": 1.0433425905067297,
+          "ci_high": 1.0981825280481687
+        },
+        "hill_negative_full_fraction": {
+          "n": 100,
+          "mean": 1.121633260451049,
+          "ci_low": 1.0937478917787757,
+          "ci_high": 1.1497028261387388
+        },
+        "hill_positive_side_fraction": {
+          "n": 100,
+          "mean": 2.500898636155846,
+          "ci_low": 2.4658352502351235,
+          "ci_high": 2.537169957571798
+        },
+        "hill_negative_side_fraction": {
+          "n": 100,
+          "mean": 2.6511784289130715,
+          "ci_low": 2.614419351901356,
+          "ci_high": 2.6882154345982783
+        },
+        "hill_absolute_nonzero_fraction": {
+          "n": 100,
+          "mean": 2.57074785064825,
+          "ci_low": 2.535701711657702,
+          "ci_high": 2.6066806549107517
+        }
+      },
+      "post10": {
+        "fundamental_error": {
+          "n": 100,
+          "mean": 0.13653222551396246,
+          "ci_low": 0.13189099909841615,
+          "ci_high": 0.1410524286712166
+        },
+        "return_volatility": {
+          "n": 100,
+          "mean": 0.014243751888005154,
+          "ci_low": 0.014092050587257508,
+          "ci_high": 0.01440738463394897
+        },
+        "zero_return_ratio": {
+          "n": 100,
+          "mean": 0.8320572777777778,
+          "ci_low": 0.8285247791666667,
+          "ci_high": 0.835462026388889
+        },
+        "hill_positive_full_fraction": {
+          "n": 100,
+          "mean": 1.1800424260681035,
+          "ci_low": 1.1492773080937586,
+          "ci_high": 1.2104583933359605
+        },
+        "hill_negative_full_fraction": {
+          "n": 100,
+          "mean": 1.2291113456291936,
+          "ci_low": 1.197735763855745,
+          "ci_high": 1.2607424530631046
+        },
+        "hill_positive_side_fraction": {
+          "n": 100,
+          "mean": 3.439830849019517,
+          "ci_low": 3.395959703235067,
+          "ci_high": 3.4841585032117637
+        },
+        "hill_negative_side_fraction": {
+          "n": 100,
+          "mean": 3.5469502568672135,
+          "ci_low": 3.507764850470945,
+          "ci_high": 3.587118662383629
+        },
+        "hill_absolute_nonzero_fraction": {
+          "n": 100,
+          "mean": 3.480323047626639,
+          "ci_low": 3.440685735138412,
+          "ci_high": 3.5201086055484505
+        }
+      },
+      "post50": {
+        "fundamental_error": {
+          "n": 100,
+          "mean": 0.1026675196226853,
+          "ci_low": 0.09825305945295308,
+          "ci_high": 0.1073016843464768
+        },
+        "return_volatility": {
+          "n": 100,
+          "mean": 0.011857995555769498,
+          "ci_low": 0.011626756517318737,
+          "ci_high": 0.012129221447928523
+        },
+        "zero_return_ratio": {
+          "n": 100,
+          "mean": 0.8177776999999999,
+          "ci_low": 0.81356711,
+          "ci_high": 0.8220512574999999
+        },
+        "hill_positive_full_fraction": {
+          "n": 100,
+          "mean": 1.3576656634275241,
+          "ci_low": 1.3219472988916425,
+          "ci_high": 1.3917165151231001
+        },
+        "hill_negative_full_fraction": {
+          "n": 100,
+          "mean": 1.3996143315068377,
+          "ci_low": 1.3631813290231756,
+          "ci_high": 1.43520287052691
+        },
+        "hill_positive_side_fraction": {
+          "n": 100,
+          "mean": 4.064843699110151,
+          "ci_low": 4.020155513914466,
+          "ci_high": 4.109875620539004
+        },
+        "hill_negative_side_fraction": {
+          "n": 100,
+          "mean": 4.1625480930358,
+          "ci_low": 4.114174627738221,
+          "ci_high": 4.210810600650754
+        },
+        "hill_absolute_nonzero_fraction": {
+          "n": 100,
+          "mean": 4.102521900161529,
+          "ci_low": 4.062704901647699,
+          "ci_high": 4.140271902571316
+        }
+      },
+      "last10": {
+        "fundamental_error": {
+          "n": 100,
+          "mean": 0.09708560359036088,
+          "ci_low": 0.09211049827219682,
+          "ci_high": 0.10203356083183536
+        },
+        "return_volatility": {
+          "n": 100,
+          "mean": 0.011638763363470899,
+          "ci_low": 0.01131898697255422,
+          "ci_high": 0.011991916588150577
+        },
+        "zero_return_ratio": {
+          "n": 100,
+          "mean": 0.8128395,
+          "ci_low": 0.8078640874999999,
+          "ci_high": 0.81785825
+        },
+        "hill_positive_full_fraction": {
+          "n": 100,
+          "mean": 1.3964135899907517,
+          "ci_low": 1.3527137891446566,
+          "ci_high": 1.4395421119053537
+        },
+        "hill_negative_full_fraction": {
+          "n": 100,
+          "mean": 1.4358427785281742,
+          "ci_low": 1.3907161357650364,
+          "ci_high": 1.4809943916545643
+        },
+        "hill_positive_side_fraction": {
+          "n": 100,
+          "mean": 4.1200101597791505,
+          "ci_low": 4.0400240733771975,
+          "ci_high": 4.19981089995525
+        },
+        "hill_negative_side_fraction": {
+          "n": 100,
+          "mean": 4.263944968776662,
+          "ci_low": 4.16057982866825,
+          "ci_high": 4.36991842132668
+        },
+        "hill_absolute_nonzero_fraction": {
+          "n": 100,
+          "mean": 4.177116137760566,
+          "ci_low": 4.106722419605831,
+          "ci_high": 4.247823144091095
+        }
+      }
+    },
+    "noise": {
+      "full": {
+        "fundamental_error": {
+          "n": 100,
+          "mean": 0.5727821974897731,
+          "ci_low": 0.5508762770327604,
+          "ci_high": 0.5924434620247958
+        },
+        "return_volatility": {
+          "n": 100,
+          "mean": 0.006377984865960696,
+          "ci_low": 0.006371070516688876,
+          "ci_high": 0.006384552342129716
+        },
+        "zero_return_ratio": {
+          "n": 100,
+          "mean": 0.45945489999999983,
+          "ci_low": 0.4591057275000001,
+          "ci_high": 0.45981301375000005
+        },
+        "hill_positive_full_fraction": {
+          "n": 100,
+          "mean": 2.7859503702091546,
+          "ci_low": 2.7808536863180557,
+          "ci_high": 2.7911658701495377
+        },
+        "hill_negative_full_fraction": {
+          "n": 100,
+          "mean": 2.6061098822325395,
+          "ci_low": 2.601202623983354,
+          "ci_high": 2.6109840569836447
+        },
+        "hill_positive_side_fraction": {
+          "n": 100,
+          "mean": 4.242927831679577,
+          "ci_low": 4.2285761769254036,
+          "ci_high": 4.257317955256254
+        },
+        "hill_negative_side_fraction": {
+          "n": 100,
+          "mean": 4.153658429788862,
+          "ci_low": 4.138369376051907,
+          "ci_high": 4.168982257304812
+        },
+        "hill_absolute_nonzero_fraction": {
+          "n": 100,
+          "mean": 4.1650473200493074,
+          "ci_low": 4.153231723027625,
+          "ci_high": 4.176557650994453
+        }
+      },
+      "post10": {
+        "fundamental_error": {
+          "n": 100,
+          "mean": 0.5739553749773254,
+          "ci_low": 0.5500864832469242,
+          "ci_high": 0.5956016477256562
+        },
+        "return_volatility": {
+          "n": 100,
+          "mean": 0.006393794310948391,
+          "ci_low": 0.0063874490979792566,
+          "ci_high": 0.006399814962049579
+        },
+        "zero_return_ratio": {
+          "n": 100,
+          "mean": 0.46011650000000004,
+          "ci_low": 0.4597515777777778,
+          "ci_high": 0.4604896583333333
+        },
+        "hill_positive_full_fraction": {
+          "n": 100,
+          "mean": 2.7913154930563677,
+          "ci_low": 2.785924165784183,
+          "ci_high": 2.7970381751844844
+        },
+        "hill_negative_full_fraction": {
+          "n": 100,
+          "mean": 2.607728412510288,
+          "ci_low": 2.602856537971447,
+          "ci_high": 2.612843823909551
+        },
+        "hill_positive_side_fraction": {
+          "n": 100,
+          "mean": 4.249814695966369,
+          "ci_low": 4.235462984072925,
+          "ci_high": 4.264998186506906
+        },
+        "hill_negative_side_fraction": {
+          "n": 100,
+          "mean": 4.175489064765921,
+          "ci_low": 4.160238461060452,
+          "ci_high": 4.190339353611158
+        },
+        "hill_absolute_nonzero_fraction": {
+          "n": 100,
+          "mean": 4.181033267028321,
+          "ci_low": 4.169468204009119,
+          "ci_high": 4.19319277864248
+        }
+      },
+      "post50": {
+        "fundamental_error": {
+          "n": 100,
+          "mean": 0.563897779651936,
+          "ci_low": 0.5336791434726221,
+          "ci_high": 0.5921287542418641
+        },
+        "return_volatility": {
+          "n": 100,
+          "mean": 0.006398576226395071,
+          "ci_low": 0.006390049360075586,
+          "ci_high": 0.006406939488661613
+        },
+        "zero_return_ratio": {
+          "n": 100,
+          "mean": 0.4601328999999999,
+          "ci_low": 0.4596954649999999,
+          "ci_high": 0.4605702224999999
+        },
+        "hill_positive_full_fraction": {
+          "n": 100,
+          "mean": 2.797373215716035,
+          "ci_low": 2.7890525983150893,
+          "ci_high": 2.805705454744997
+        },
+        "hill_negative_full_fraction": {
+          "n": 100,
+          "mean": 2.609894703603962,
+          "ci_low": 2.602924416087963,
+          "ci_high": 2.6168278620527143
+        },
+        "hill_positive_side_fraction": {
+          "n": 100,
+          "mean": 4.249778385734681,
+          "ci_low": 4.230020673901951,
+          "ci_high": 4.269566362256081
+        },
+        "hill_negative_side_fraction": {
+          "n": 100,
+          "mean": 4.182724068242194,
+          "ci_low": 4.160756782047488,
+          "ci_high": 4.205448994075022
+        },
+        "hill_absolute_nonzero_fraction": {
+          "n": 100,
+          "mean": 4.1823623916602415,
+          "ci_low": 4.167010467567447,
+          "ci_high": 4.197713618269728
+        }
+      },
+      "last10": {
+        "fundamental_error": {
+          "n": 100,
+          "mean": 0.5532196700356454,
+          "ci_low": 0.518775800605224,
+          "ci_high": 0.5861604774625635
+        },
+        "return_volatility": {
+          "n": 100,
+          "mean": 0.006411173618248,
+          "ci_low": 0.006392604946596414,
+          "ci_high": 0.00643082283034667
+        },
+        "zero_return_ratio": {
+          "n": 100,
+          "mean": 0.460441,
+          "ci_low": 0.4595419625,
+          "ci_high": 0.46132169999999995
+        },
+        "hill_positive_full_fraction": {
+          "n": 100,
+          "mean": 2.7859666182726106,
+          "ci_low": 2.7690060060275896,
+          "ci_high": 2.8030117178611427
+        },
+        "hill_negative_full_fraction": {
+          "n": 100,
+          "mean": 2.596338366624608,
+          "ci_low": 2.5797359701878655,
+          "ci_high": 2.612508156612812
+        },
+        "hill_positive_side_fraction": {
+          "n": 100,
+          "mean": 4.224835404997926,
+          "ci_low": 4.180662483035894,
+          "ci_high": 4.269234840542988
+        },
+        "hill_negative_side_fraction": {
+          "n": 100,
+          "mean": 4.1731658672220195,
+          "ci_low": 4.129280629945166,
+          "ci_high": 4.220526126752291
+        },
+        "hill_absolute_nonzero_fraction": {
+          "n": 100,
+          "mean": 4.169156455332295,
+          "ci_low": 4.136355207383133,
+          "ci_high": 4.203614448208061
+        }
+      }
+    }
+  }
+}

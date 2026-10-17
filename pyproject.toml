@@ -1,11 +1,12 @@
 [project]
-name = "mini-simulation"
-version = "0.3.1"
-description = "Lightweight multi-agent market simulation sandbox with a batch-based price-time-priority order book."
+name = "heterogeneous-lob"
+version = "0.6.0"
+description = "Reproducible local simulations of the Chiarella-Iori-Perello limit order book model."
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "matplotlib>=3.10,<4.0",
+    "numpy>=2,<3",
 ]
 
 [tool.uv]
